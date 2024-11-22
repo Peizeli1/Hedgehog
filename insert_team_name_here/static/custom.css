@@ -1,0 +1,231 @@
+/* General Body Style */
+body {
+  font-family: "DM Sans", sans-serif;
+  color: #333333;
+  background-color: #d3d3d3;
+  background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #d3d3d3 33px), 
+                    repeating-linear-gradient(#317bd055, #317bd0);
+  margin: 0;
+  padding: 0;
+}
+
+.logo {
+  width: 80px;
+  height: auto;
+}
+
+/* Full-page container */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Home Page Specific Styles */
+.home-wrapper .h-100 {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+.home-wrapper h1.cover-heading {
+  font-size: 4rem;
+  font-weight: bolder;
+  color: #22313f;
+  text-align: center;
+}
+
+.home-wrapper .cover-card {
+  background-color: #e6e9f0;
+  opacity: 1;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 40vw;
+  min-width: 300px;
+  min-height: 450px;
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.1);
+  border: 0.2rem solid #393e46; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 
+              inset 0 0 8px rgba(255, 255, 255, 0.6); 
+  border-radius: 0.3rem;
+}
+
+.home-wrapper p.cover-text {
+  font-size: 1rem;
+  text-align: center;
+  color: #707579b2;
+  margin-top: auto;
+}
+
+.home-wrapper .tagline {
+  font-size: 1.5rem;
+  color: #393e46;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 40px;
+  font-style: italic;
+}
+
+form .btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  background-color: #7aa5d2;
+  color: #393e46;
+  margin-top: 1.0rem;
+}
+
+form .btn:hover {
+  background-color: #6386ac;
+  transform: scale(1.05);
+}
+
+.home-wrapper .cover-card a.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  min-width: 350px;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 20px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.home-wrapper .cover-card a.btn-secondary {
+  background-color: #7aa5d2;
+  color: #393e46;
+}
+
+.home-wrapper .cover-card a.btn-secondary:hover {
+  background-color: #6386ac;
+  transform: scale(1.05);
+}
+
+/* Input and textarea styles */
+input, textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0px 0px 5px rgba(13, 110, 253, 0.5);
+}
+
+/* Login and Signup Page Styles */
+.login-card, .signup-card {
+  background-color: #e6e9f0;
+  opacity: 1;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 30vw;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  border: 0.2rem solid #393e46; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 
+              inset 0 0 8px rgba(255, 255, 255, 0.6); 
+  border-radius: 0.3rem;
+}
+
+.login-card h1, .signup-card h1 {
+  font-size: 2.5rem;
+  font-weight: bolder;
+  color: #22313f;
+  text-align: center;
+}
+
+
+.sign-text{
+  text-align: center;
+  color:#343a40;
+} 
+
+
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+/* Typography */
+p {
+  line-height: 1.6;
+}
+
+.low-key {
+  color: #6c757d;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.list-title {
+  margin: 1rem 0;
+  font-weight: 600;
+  color: #343a40;
+}
+
+/* Profile */
+.profile-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 1rem;
+  border: 2px solid #ddd;
+}
+
+.profile-text {
+  padding-left: 1rem;
+}
+
+.profile-username {
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* Hyperlinks */
+a {
+  color: #0d6efd;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+  color: #004085;
+  text-decoration: underline;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .login-card, .signup-card {
+    padding: 1.5rem;
+  }
+}
+
