@@ -57,7 +57,7 @@ ROOT_URLCONF = 'code_tutors.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # 添加模板目录路径
+        'DIRS': [BASE_DIR / 'templates'],  # Add template directory path
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
