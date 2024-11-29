@@ -3,6 +3,8 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
 from .models import User
+from .models import Booking
+
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -30,6 +32,7 @@ class UserForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
 
+
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
 
@@ -40,7 +43,7 @@ class NewPasswordMixin(forms.Form):
             regex=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).*$',
             message='Password must contain an uppercase character, a lowercase '
                     'character and a number'
-            )]
+        )]
     )
     password_confirmation = forms.CharField(label='Password confirmation', widget=forms.PasswordInput())
 
@@ -61,7 +64,7 @@ class PasswordForm(NewPasswordMixin):
 
     def __init__(self, user=None, **kwargs):
         """Construct new form instance with a user instance."""
-        
+
         super().__init__(**kwargs)
         self.user = user
 
@@ -108,3 +111,25 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
             password=self.cleaned_data.get('new_password'),
         )
         return user
+
+
+class StudentBookingForm(forms.ModelForm):
+    """Form for students to book a slot."""
+
+    class Meta:
+        model = Booking
+        fields = ['student', 'course']
+
+        widgets = {
+            'studentdescription': forms.Textarea(
+                attrs={'rows': 3, 'placeholder': 'Add a note or details about your booking.'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Custom initialization for form."""
+        super().__init__(*args, **kwargs)
+        # Example: Setting placeholder text or making fields read-only
+        self.fields['student'].widget.attrs.update({'readonly': True})
+
+
+
