@@ -53,6 +53,12 @@ urlpatterns = [
     # Invoice related routing (assuming you have implemented views related to viewing invoices, paying invoices, etc. in view functions）
     path('invoice/', views.invoice_view, name='invoice'),
 
+    path('tutors/', views.TutorsView.as_view(), name='tutors'),
+
+    path('tutors_invoices/', views.InvoicesTutors.as_view(), name='tutors_invoices'),
+
+    path('tutors_calendar/', views.CalendarView.as_view(), name='tutors_calendar'),
+
     # If there are other applications that need to be integrated into the current project, their URL configuration can be introduced via the include function.
     # For example, if there is an application named 'blog' that has its own urls.py file, it can be introduced like this:
     # path('blog/', include('blog.urls'))

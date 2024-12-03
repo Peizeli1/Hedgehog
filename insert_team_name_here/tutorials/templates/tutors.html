@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Dashboard - Hedgehog Tutoring</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(circle, rgba(236,241,248,1) 0%, rgba(186,202,232,1) 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background-color: #f7f9fc;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #2a3f5f;
+        }
+        .container p {
+            color: #5b6b85;
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #005bb5;
+        }
+        .footer {
+            margin-top: 20px;
+            color: #9aa1b9;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tutor Dashboard</h1>
+        <p>Manage your schedule and lessons effortlessly</p>
+        <a href="{% url 'calendar' %}" class="button">See Your Calendar</a>
+        <a href="{% url 'profile' %}" class="button">Edit Profile</a>
+        <a href="{% url 'invoices' %}" class="button">Invoices</a>
+        <a href="{% url 'log_out' %}" class="button">Log Out</a>
+        <div class="footer">
+            <p>Powered by Hedgehog Tutoring</p>
+        </div>
+    </div>
+</body>
+</html>

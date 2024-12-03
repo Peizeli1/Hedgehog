@@ -16,6 +16,10 @@ from django.views.generic import ListView
 # from tutorials.views import dashboard
 # from tutorials.views.views import LogInView
 from. import dashboard_utils  # 导入新创建的模块
+from django.views.generic import TemplateView
+from datetime import datetime, timedelta
+from calendar import monthrange
+
 
 def get_user_data(user):
     """获取用户相关数据的函数"""
@@ -293,3 +297,66 @@ class StudentListView(ListView):
 
     def get_queryset(self):
         return super().get_queryset().order_by('user__last_name')
+    
+
+class TutorsView(LoginRequiredMixin, TemplateView):
+    """Display the tutor's home page."""
+    template_name = 'tutors.html'
+
+    def get_context_data(self, **kwargs):
+        """Add user-specific data to the context."""
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        return context
+
+class TutorsInvoices(LoginRequiredMixin, TemplateView):
+    """Display the invoices page for tutors."""
+    template_name = "invoices.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add any invoice-related context data here if needed
+        context['invoices'] = []  # Replace with actual data
+        return context
+    
+class TutorsCalendarView(LoginRequiredMixin, TemplateView):
+    template_name = "calendar.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = datetime.today()
+
+        # Get the first and last day of the current month
+        current_month_start = today.replace(day=1)
+        _, last_day = monthrange(today.year, today.month)  # Get last day of the month
+
+        # Prepare start of next month for filtering
+        next_month_start = current_month_start + timedelta(days=last_day)
+
+        # Filter courses assigned to the logged-in tutor for the current month
+        courses = Course.objects.filter(
+            tutor__user=self.request.user,
+            time_slot__date__gte=current_month_start,
+            time_slot__date__lt=next_month_start
+        )
+
+        # Organize courses by date
+        events = {}
+        for course in courses:
+            date_str = course.time_slot.strftime('%Y-%m-%d')  # Format date as YYYY-MM-DD
+            if date_str not in events:
+                events[date_str] = []
+            events[date_str].append({
+                'course_name': course.course_type.name,
+                'time': course.time_slot.strftime('%I:%M %p'),
+                'student': course.student.user.full_name(),
+                'location': course.location,
+                'duration': course.duration,
+            })
+
+        # Add data to the context
+        context['year'] = today.year
+        context['month'] = today.strftime('%B')
+        context['days'] = range(1, last_day + 1)  # List days in the current month
+        context['events'] = events
+        return context
