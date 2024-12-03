@@ -48,7 +48,7 @@ urlpatterns = [
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
 
     # Course booking related routes (assuming you have implemented course booking related views in view functions such as course_booking_view and other user registration routes to display the registration page and handle new user registration requests）
-    path('course_booking/', views.course_booking_view, name='course_booking'),
+    path('create_booking/', views.course_booking_view, name='create_booking'),
 
     # Invoice related routing (assuming you have implemented views related to viewing invoices, paying invoices, etc. in view functions）
     path('invoice/', views.invoice_view, name='invoice'),

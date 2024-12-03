@@ -2,6 +2,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from. import utils
+from libgravatar import Gravatar
 
 
 class User(AbstractUser):
@@ -266,10 +267,29 @@ class CourseEnrollment(models.Model):
 
 
 class Booking(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    booking_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[('Pending', '待处理'), ('Confirmed', '已确认'), ('Cancelled', '已取消')])
+    """Model for handling bookings."""
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # Links the booking to the authenticated user
+        on_delete=models.CASCADE,
+        related_name="bookings",
+        help_text="The student making the booking."
+    )
+    studentdescription = models.TextField(
+        max_length=500,
+        help_text="Details about the course or booking."
+    )
+
+  
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        """Model options."""
+        ordering = ['-created_at']
+        verbose_name = "Booking"
+        verbose_name_plural = "Bookings"
 
     def __str__(self):
-        return f"{self.student.user.username} - {self.course.name} ({self.status})"
+        """String representation for debugging and admin display."""
+        return f"Booking by {self.student.username} on {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"

@@ -8,14 +8,18 @@ from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
+from django import forms
 from django.views.generic.edit import FormView, UpdateView
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, StudentBookingForm
 from tutorials.helpers import login_prohibited
-from.models import User, Course, CourseEnrollment, Invoice, Tutor, Student
+from .models import User, Course, CourseEnrollment, Invoice, Tutor, Student
 from django.views.generic import ListView
 # from tutorials.views import dashboard
 # from tutorials.views.views import LogInView
 from. import dashboard_utils  # 导入新创建的模块
+from .models import Booking
+from django.views.generic import TemplateView
+
 
 def get_user_data(user):
     """获取用户相关数据的函数"""
@@ -225,36 +229,61 @@ class SignUpView(LoginProhibitedMixin, FormView):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
 
-def course_booking_view(request):
-    """
-    处理课程预订的视图函数。
+# def course_booking_view(request):
+#     """
+#     处理课程预订的视图函数。
 
-    这里可以实现诸如获取可预订课程列表、处理学生预订请求、验证预订条件等功能。
-    """
-    if request.method == 'POST':
-        # 处理POST请求，比如获取学生提交的预订信息
-        student_id = request.POST.get('student_id')
-        course_id = request.POST.get('course_id')
+#     这里可以实现诸如获取可预订课程列表、处理学生预订请求、验证预订条件等功能。
+#     """
+#     if request.method == 'POST':
+#         # 处理POST请求，比如获取学生提交的预订信息
+#         student_id = request.POST.get('student_id')
+#         course_id = request.POST.get('course_id')
 
-        student = Student.objects.get(id=student_id)
-        course = Course.objects.get(id=course_id)
+#         student = Student.objects.get(id=student_id)
+#         course = Course.objects.get(id=course_id)
 
-        # 这里可以添加更多的预订条件验证逻辑，比如检查学生是否已经预订过该课程、课程是否还有名额等
+#         # 这里可以添加更多的预订条件验证逻辑，比如检查学生是否已经预订过该课程、课程是否还有名额等
 
-        # 如果验证通过，执行预订操作，比如创建一个课程预订记录（假设已经有相关的课程预订模型类定义）
-        # booking = CourseBooking.objects.create(student=student, course=course)
+#         # 如果验证通过，执行预订操作，比如创建一个课程预订记录（假设已经有相关的课程预订模型类定义）
+#         # booking = CourseBooking.objects.create(student=student, course=course)
 
-        return redirect('success_page')  # 预订成功后重定向到成功页面，这里的'success_page'需要根据实际项目中定义的URL名称来替换
+#         return redirect('success_page')  # 预订成功后重定向到成功页面，这里的'success_page'需要根据实际项目中定义的URL名称来替换
 
-    else:
-        # 处理GET请求，比如获取可预订课程列表并传递给模板进行展示
-        available_courses = Course.objects.filter(is_available=True)  # 假设课程模型类中有is_available字段来表示是否可预订
+#     else:
+#         # 处理GET请求，比如获取可预订课程列表并传递给模板进行展示
+#         available_courses = Course.objects.filter(is_available=True)  # 假设课程模型类中有is_available字段来表示是否可预订
 
-        context = {
-            'available_courses': available_courses
-        }
+#         context = {
+#             'available_courses': available_courses
+#         }
 
-        return render(request, 'course_booking.html', context)
+#         return render(request, 'course_booking.html', context)
+
+class StudentBookingView(LoginRequiredMixin, FormView):
+    """Allow students to book a course slot."""
+
+    def get(self, request, *args, **kwargs):
+        # Pass the logged-in student to the form's initial data
+        form = StudentBookingForm(initial={'student': request.user})
+        return render(request, 'create_booking.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        # Pass the logged-in student to the form's POST data
+        data = request.POST.copy()
+        data['student'] = request.user  # Ensure the 'student' field is populated
+        form = StudentBookingForm(data=data)
+        if form.is_valid():
+            form.save()
+            return redirect('success')  # Adjust redirect to the desired page
+        return render(request, 'create_booking.html', {'form': form}) 
+
+class SuccessView(TemplateView):
+    """Display a success page after booking."""
+    template_name = "success.html"
+
+
+
 
 def invoice_view(request):
     """
