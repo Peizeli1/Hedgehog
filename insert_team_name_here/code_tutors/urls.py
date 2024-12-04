@@ -27,41 +27,41 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('students', views.StudentListView.as_view(), name='student_list'),
 
-    # 首页路由，访问根路径时展示应用的起始页面
+    # First page routing, show application's start page when accessing the root path
 
-    # 用户仪表盘路由，展示用户相关的各种信息和操作入口
+    # User dashboard routing, displaying various information related to the user and the operation portal
     path('dashboard/', views.dashboard, name='dashboard'),
 
-    # 登录路由，处理用户登录请求并展示登录页面
+    # Login route that handles user login requests and displays the login page
     path('log_in/', views.LogInView.as_view(), name='log_in'),
 
-    # 登出路由，处理用户登出操作
+    # Logout routing to handle user logout operations
     path('log_out/', views.log_out, name='log_out'),
 
-    # 修改密码路由，引导用户修改密码并处理相关请求
+    # Change password routing, guiding users to change their passwords and handling related requests
     path('password/', views.PasswordView.as_view(), name='password'),
 
-    # 用户资料更新路由，用于用户更新个人资料信息
+    # User Profile Update Route for users to update their profile information
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
 
-    # 用户注册路由，展示注册页面并处理新用户注册请求
+    # User registration route to display the registration page and handle new user registration requests
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
 
-    # 课程预订相关路由（假设你在视图函数中实现了课程预订相关视图，如course_booking_view等）
+    # Course booking related routes (assuming you have implemented course booking related views in view functions such as course_booking_view and other user registration routes to display the registration page and handle new user registration requests）
     path('course_booking/', views.course_booking_view, name='course_booking'),
 
-    # 发票相关路由（假设你在视图函数中实现了查看发票、支付发票等相关视图）
+    # Invoice related routing (assuming you have implemented views related to viewing invoices, paying invoices, etc. in view functions）
     path('invoice/', views.invoice_view, name='invoice'),
 
-    # 如果有其他应用需要集成到当前项目，可通过include函数引入其URL配置
-    # 例如，如果有一个名为'blog'的应用，其有自己的urls.py文件，可以这样引入：
+    # If there are other applications that need to be integrated into the current project, their URL configuration can be introduced via the include function.
+    # For example, if there is an application named 'blog' that has its own urls.py file, it can be introduced like this:
     # path('blog/', include('blog.urls'))
 
 ]
 
-# 处理静态文件的路由配置，确保在开发环境下能正确加载静态文件（如CSS、JavaScript、图片等）
+# Handle the routing configuration of static files to ensure that static files (e.g. CSS, JavaScript, images, etc.) are loaded correctly in the development environment
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# 如果在项目中使用了媒体文件（如用户上传的文件等），还需要添加以下配置来处理媒体文件的路由
+# If you are using media files in your project (e.g., user uploaded files, etc.), you will also need to add the following configuration to handle the routing of media files
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
