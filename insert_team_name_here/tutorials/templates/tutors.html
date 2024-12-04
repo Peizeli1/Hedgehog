@@ -65,10 +65,14 @@
     <div class="container">
         <h1>Tutor Dashboard</h1>
         <p>Manage your schedule and lessons effortlessly</p>
-        <a href="{% url 'calendar' %}" class="button">See Your Calendar</a>
-        <a href="{% url 'profile' %}" class="button">Edit Profile</a>
-        <a href="{% url 'invoices' %}" class="button">Invoices</a>
-        <a href="{% url 'log_out' %}" class="button">Log Out</a>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="action" value="calendar" class="button">Calendar</button>
+            <button type="submit" name="action" value="profile" class="button">Edit Profile</button>
+            <button type="submit" name="action" value="invoices" class="button">Invoices</button>
+            <button type="submit" name="action" value="requests" class="button">Requests</button>
+            <button type="submit" name="action" value="log_out" class="button">Log Out</button>
+        </form>
         <div class="footer">
             <p>Powered by Hedgehog Tutoring</p>
         </div>

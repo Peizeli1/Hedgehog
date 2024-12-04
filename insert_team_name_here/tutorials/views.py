@@ -19,6 +19,13 @@ from. import dashboard_utils  # 导入新创建的模块
 from django.views.generic import TemplateView
 from datetime import datetime, timedelta
 from calendar import monthrange
+from django.shortcuts import render, redirect
+from .forms import TutorsActionForm
+from django.shortcuts import render, redirect
+from .forms import InvoiceForm
+from .forms import CalendarFilterForm
+import calendar
+from django.urls import reverse_lazy
 
 
 def get_user_data(user):
@@ -299,28 +306,46 @@ class StudentListView(ListView):
         return super().get_queryset().order_by('user__last_name')
     
 
-class TutorsView(LoginRequiredMixin, TemplateView):
-    """Display the tutor's home page."""
-    template_name = 'tutors.html'
+class TutorsHomePageView(LoginRequiredMixin, FormView):
+    """Display the tutors dashboard and handle actions."""
+    template_name = "tutors.html"
+    form_class = TutorsActionForm
 
-    def get_context_data(self, **kwargs):
-        """Add user-specific data to the context."""
-        context = super().get_context_data(**kwargs)
-        context['user'] = self.request.user
-        return context
+    def form_valid(self, form):
+        """Handle valid form submissions."""
+        action = form.cleaned_data['action']
+        # Redirect based on the selected action
+        if action == 'calendar':
+            return redirect('tutors_calendar')  # Ensure the URL name matches
+        elif action == 'profile':
+            return redirect('profile')  # Ensure the URL name matches
+        elif action == 'invoices':
+            return redirect('tutors_invoices')  # Ensure the URL name matches
+        elif action == 'requests':
+            return redirect('tutors_requests')  # Ensure the URL name matches
+        elif action == 'log_out':
+            return redirect('log_out')  # Ensure the URL name matches
+        return super().form_valid(form)
 
-class TutorsInvoices(LoginRequiredMixin, TemplateView):
+    def get_success_url(self):
+        """Provide a fallback URL in case no action matches."""
+        return reverse_lazy('tutors')
+    
+
+class TutorsInvoicesView(LoginRequiredMixin, TemplateView):
     """Display the invoices page for tutors."""
-    template_name = "invoices.html"
+    template_name = "tutors_invoices.html"  # Use the correct template name
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Add any invoice-related context data here if needed
-        context['invoices'] = []  # Replace with actual data
+        context['invoices'] = []  # Replace with actual data or query your database
         return context
-    
+
+
 class TutorsCalendarView(LoginRequiredMixin, TemplateView):
-    template_name = "calendar.html"
+    """Display the calendar page for tutors."""
+    template_name = "tutors_calendar.html"  # Update to match your desired template name
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -336,8 +361,8 @@ class TutorsCalendarView(LoginRequiredMixin, TemplateView):
         # Filter courses assigned to the logged-in tutor for the current month
         courses = Course.objects.filter(
             tutor__user=self.request.user,
-            time_slot__date__gte=current_month_start,
-            time_slot__date__lt=next_month_start
+            time_slot__gte=current_month_start,
+            time_slot__lt=next_month_start
         )
 
         # Organize courses by date
@@ -360,3 +385,14 @@ class TutorsCalendarView(LoginRequiredMixin, TemplateView):
         context['days'] = range(1, last_day + 1)  # List days in the current month
         context['events'] = events
         return context
+    
+class TutorsRequestsView(LoginRequiredMixin, TemplateView):
+    """Display the Requests page for tutors."""
+    template_name = "tutors_requests.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add any context data for the Requests page if needed
+        context['message'] = "This is the Requests page."
+        return context
+

@@ -132,4 +132,49 @@ class StudentBookingForm(forms.ModelForm):
         self.fields['student'].widget.attrs.update({'readonly': True})
 
 
+class TutorsActionForm(forms.Form):
+    action = forms.ChoiceField(
+        choices=[
+            ('calendar', 'Calendar'),
+            ('profile', 'Edit Profile'),
+            ('invoices', 'Invoices'),
+            ('log_out', 'Log Out'),
+            ('requests', 'Requests')
+        ],
+        widget=forms.RadioSelect,
+    )
+    
+class InvoiceForm(forms.Form):
+    invoice_id = forms.IntegerField(
+        required=False,
+        label="Invoice ID",
+        widget=forms.NumberInput(attrs={'placeholder': 'Enter Invoice ID'}),
+    )
+    action = forms.ChoiceField(
+        choices=[
+            ('view', 'View Invoice'),
+            ('download', 'Download Invoice'),
+        ],
+        widget=forms.Select,
+        required=True,
+    )
+
+class CalendarFilterForm(forms.Form):
+    month = forms.ChoiceField(
+        choices=[
+            (1, 'January'), (2, 'February'), (3, 'March'),
+            (4, 'April'), (5, 'May'), (6, 'June'),
+            (7, 'July'), (8, 'August'), (9, 'September'),
+            (10, 'October'), (11, 'November'), (12, 'December')
+        ],
+        label="Select Month",
+        required=True,
+        widget=forms.Select,
+    )
+    year = forms.IntegerField(
+        label="Year",
+        required=True,
+        widget=forms.NumberInput(attrs={'placeholder': 'Enter Year'}),
+    )
+
 

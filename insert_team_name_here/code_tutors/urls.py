@@ -59,6 +59,8 @@ urlpatterns = [
 
     path('tutors_calendar/', views.CalendarView.as_view(), name='tutors_calendar'),
 
+    path('tutors_requests/', views.TutorsRequestsView.as_view(), name='tutors_requests'),  
+
     # If there are other applications that need to be integrated into the current project, their URL configuration can be introduced via the include function.
     # For example, if there is an application named 'blog' that has its own urls.py file, it can be introduced like this:
     # path('blog/', include('blog.urls'))

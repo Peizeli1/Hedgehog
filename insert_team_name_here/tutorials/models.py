@@ -274,14 +274,30 @@ class Booking(models.Model):
     def __str__(self):
         return f"{self.student.user.username} - {self.course.name} ({self.status})"
     
-class TutorsInvoice(models.Model):
+class Tutor(models.Model):
+    """Tutor-specific data associated with a user."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'tutor'})
+    expertise = models.CharField(max_length=255, help_text="E.g., Python, Java")
+    availability = models.TextField(help_text="JSON format for time slots.")
+    
+    advanced_courses = models.ManyToManyField(
+        CourseType,
+        blank=True,
+        help_text="List of advanced courses the tutor can teach."
+    )
+
+    def __str__(self):
+        return self.user.full_name()
+
+class Invoice(models.Model):
     """Invoice model to track billing information for a student."""
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=50, default="Unpaid", help_text="E.g., Paid, Unpaid.")
     due_date = models.DateField()
 
     def __str__(self):
         return f"Invoice {self.id} - {self.student.user.full_name()}"
+
 
 
