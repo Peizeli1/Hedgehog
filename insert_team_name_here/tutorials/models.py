@@ -12,9 +12,9 @@ class User(AbstractUser):
     """
 
     ROLE_CHOICES = [
-        ('student', '学生'),
-        ('tutor', '导师'),
-        ('admin', '管理员'),
+        ('student', 'Student'),
+        ('tutor', 'tutor'),
+        ('admin', 'admin'),
     ]
 
     # 用户名验证器，确保用户名符合特定格式要求

@@ -16,32 +16,33 @@ from django.views.generic import ListView
 # from tutorials.views import dashboard
 # from tutorials.views.views import LogInView
 from. import dashboard_utils  # 导入新创建的模块
+from django.contrib.auth.forms import AuthenticationForm
 
-def get_user_data(user):
-    """获取用户相关数据的函数"""
-    unread_notifications_count = user.notifications.filter(is_read=False).count()
-    course_count = CourseEnrollment.objects.filter(student=user).count()
-
-    now = datetime.datetime.now()
-    enrollments = CourseEnrollment.objects.filter(student=user)
-    next_course = None
-    for enrollment in enrollments:
-        if enrollment.start_date >= now:
-            next_course = enrollment.course
-            break
-
-    next_course_datetime = None
-    next_course_name = None
-    if next_course:
-        next_course_datetime = next_course.start_date
-        next_course_name = next_course.name
-
-    return {
-        'unread_notifications_count': unread_notifications_count,
-        'course_count': course_count,
-        'next_course_datetime': next_course_datetime,
-        'next_course_name': next_course_name
-    }
+# def get_user_data(user):
+#     """获取用户相关数据的函数"""
+#     unread_notifications_count = user.notifications.filter(is_read=False).count()
+#     course_count = CourseEnrollment.objects.filter(student=user).count()
+#
+#     now = datetime.datetime.now()
+#     enrollments = CourseEnrollment.objects.filter(student=user)
+#     next_course = None
+#     for enrollment in enrollments:
+#         if enrollment.start_date >= now:
+#             next_course = enrollment.course
+#             break
+#
+#     next_course_datetime = None
+#     next_course_name = None
+#     if next_course:
+#         next_course_datetime = next_course.start_date
+#         next_course_name = next_course.name
+#
+#     return {
+#         'unread_notifications_count': unread_notifications_count,
+#         'course_count': course_count,
+#         'next_course_datetime': next_course_datetime,
+#         'next_course_name': next_course_name
+#     }
 
 
 @login_required
@@ -51,14 +52,20 @@ def dashboard(request):
     user = request.user
 
     # 获取未读通知数量
-    unread_notifications_count = user.notifications.filter(is_read=False).count()
+    #unread_notifications_count = user.notifications.filter(is_read=False).count()
 
     # 获取用户参与的课程数量
-    course_count = CourseEnrollment.objects.filter(student=user).count()
+    # print('-' * 50, user)
+    st=Student()
+    st.phone=user.phone
+    st.notes=user.notes
+    st.programming_level=user.programming_level
+
+    course_count = CourseEnrollment.objects.filter(student=st).count()
 
     # 获取下节课信息（假设按照课程开始时间排序取最近的一门课程）
     now = datetime.datetime.now()
-    enrollments = CourseEnrollment.objects.filter(student=user)
+    enrollments = CourseEnrollment.objects.filter(student=st)
     next_course = None
     for enrollment in enrollments:
         if enrollment.start_date >= now:
@@ -82,11 +89,11 @@ def dashboard(request):
                     available_courses.append(course)
 
     # 获取用户的发票信息
-    invoices = Invoice.objects.filter(student=user)
+    invoices = Invoice.objects.filter(student=st)
 
     context = {
         'user': user,
-        'unread_notifications_count': unread_notifications_count,
+        #'unread_notifications_count': unread_notifications_count,
         'course_count': course_count,
         'next_course_datetime': next_course_datetime,
         'next_course_name': next_course_name,
@@ -128,38 +135,68 @@ class LoginProhibitedMixin:
             return self.redirect_when_logged_in_url
 
 
+
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
+
     http_method_names = ['get', 'post']
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
 
     def get(self, request):
         """Display log in template."""
+
         self.next = request.GET.get('next') or ''
         return self.render()
 
     def post(self, request):
         """Handle log in attempt."""
+
         form = LogInForm(request.POST)
         self.next = request.POST.get('next') or settings.REDIRECT_URL_WHEN_LOGGED_IN
         user = form.get_user()
-
-        if not form.is_valid():
-            messages.add_message(request, messages.ERROR, "请检查输入的用户名和密码是否正确。")
-            return self.render()
-
         if user is not None:
             login(request, user)
             return redirect(self.next)
-        else:
-            messages.add_message(request, messages.ERROR, "用户名或密码错误，请重新输入。")
-            return self.render()
+        messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
+        return self.render()
 
     def render(self):
         """Render log in template with blank log in form."""
+
         form = LogInForm()
         return render(self.request, 'log_in.html', {'form': form, 'next': self.next})
 
+
+# class LogInView(LoginProhibitedMixin, View):
+#     """Display login screen and handle user login."""
+#     http_method_names = ['get', 'post']
+#     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
+#
+#     def get(self, request):
+#         """Display log in template with an empty login form."""
+#         next_url = request.GET.get('next') or ''
+#         form = AuthenticationForm()
+#         return render(request, 'log_in.html', {'form': form, 'next': next_url})
+#
+#     def post(self, request):
+#         """Handle log in attempt."""
+#         form = AuthenticationForm(request, data=request.POST)
+#         next_url = request.POST.get('next') or settings.REDIRECT_URL_WHEN_LOGGED_IN
+#
+#         if form.is_valid():
+#             username = form.cleaned_data.get('username')
+#             password = form.cleaned_data.get('password')
+#             user = authenticate(request, username=username, password=password)
+#
+#             if user is not None:
+#                 login(request, user)
+#                 return HttpResponseRedirect(next_url)
+#             else:
+#                 messages.add_message(request, messages.ERROR, "用户名或密码错误，请重新输入。")
+#         else:
+#             messages.add_message(request, messages.ERROR, "请检查输入的用户名和密码是否正确。")
+#
+#         return render(request, 'log_in.html', {'form': form, 'next': next_url})
 
 def log_out(request):
     """Log out the current user"""

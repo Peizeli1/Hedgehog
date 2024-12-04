@@ -8,7 +8,11 @@
           <form action="{% url 'log_in' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
-            {% include 'partials/bootstrap_form.html' with form=form %}
+            {% if form %}
+              {% include 'partials/bootstrap_form.html' with form=form %}
+            {% else %}
+              <p>无法加载登录表单，请稍后重试。</p>
+            {% endif %}
             <input type="submit" value="Log In" class="btn btn-secondary">
           </form>
         </div>
