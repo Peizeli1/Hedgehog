@@ -3,90 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar</title>
+    <title>Tutors Calendar - Hedgehog Tutoring</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f7fc;
-            margin: 0;
-            padding: 0;
+            margin: 20px;
         }
-        .calendar-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 1.8em;
             margin-bottom: 20px;
         }
-        .calendar-header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        .calendar-grid {
+        .calendar {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+            grid-template-columns: repeat(7, 1fr); /* 7 equal columns for the days */
+            gap: 0; /* Remove any gap between squares */
+            margin-top: 20px;
         }
         .day {
-            min-height: 100px;
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
+            border: 1px solid #ddd; /* Add a border for individual squares */
+            border-right: none; /* Remove the right border to avoid double borders */
+            border-bottom: none; /* Remove the bottom border */
+            border-radius: 10px; /* Rounded corners for a modern look */
+            background-color: #fff;
+            width: 100%; /* Ensure the squares fill their allocated grid space */
+            height: 120px; /* Maintain square proportions */
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            font-size: 1.2em; /* Keep numbers prominent */
         }
-        .day.today {
+        .day:last-child {
+            border-right: 1px solid #ddd; /* Add a border to the last column */
+        }
+        .calendar > .day:nth-child(7n) {
+            border-right: 1px solid #ddd; /* Add right border to every 7th column */
+        }
+        .day:hover {
+            transform: scale(1.05); /* Slight zoom on hover */
+            background-color: #e6f7ff; /* Light blue hover effect */
+        }
+        .today {
             background-color: #007bff;
             color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .event {
             margin-top: 5px;
-            padding: 5px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            padding: 3px;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 0.9em; /* Slightly larger text for events */
         }
-    </style>
+        .completed {
+            background-color: #28a745;
+            color: white;
+        }
+        .accepted-booking {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .form-container {
+            margin-top: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em; /* Larger button text */
+        }
+        .accept {
+            background-color: #28a745;
+            color: white;
+        }
+        .reject {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>    
 </head>
 <body>
-    <div class="calendar-container">
-        <div class="calendar-header">
-            <h1>{{ month }} {{ year }}</h1>
-        </div>
-        <div class="calendar-grid">
-            <!-- Weekdays -->
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-            <!-- Days -->
-            {% for day in range(1, 32) %}
-                <div class="day {% if day == today.day %}today{% endif %}">
-                    <div>{{ day }}</div>
-                    {% if day|date:'Y-m-d' in events %}
-                        {% for event in events|default:'' %}
-                            <div class="event">{{ event.title }} - {{ event.time }}</div>
+    <h1>Tutors Calendar for {{ month }} {{ year }}</h1>
+
+    {% if error_message %}
+        <p style="color: red; text-align: center;">{{ error_message }}</p>
+    {% else %}
+        <div class="calendar">
+            {% for day in days %}
+                <div class="day {% if day == today %}today{% endif %}">
+                    {{ day.day }}
+                    {% if day|date:"Y-m-d" in events %}
+                        {% for event in events|dictsort:"date" %}
+                            <div class="event {% if event.status == 'Completed' %}completed{% elif event.status == 'Accepted Booking' %}accepted-booking{% endif %}">
+                                <strong>{{ event.course_name }}</strong> at {{ event.time }}<br>
+                                <em>{{ event.student }}</em><br>
+                                {% if event.status == 'Accepted Booking' %}
+                                    <div class="form-container">
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="booking_id" value="{{ event.booking_id }}">
+                                            <input type="hidden" name="action" value="accept">
+                                            <button type="submit" class="accept">Accept</button>
+                                        </form>
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="booking_id" value="{{ event.booking_id }}">
+                                            <input type="hidden" name="action" value="reject">
+                                            <button type="submit" class="reject">Reject</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
                         {% endfor %}
                     {% endif %}
                 </div>
             {% endfor %}
         </div>
-    </div>
+    {% endif %}
 </body>
 </html>

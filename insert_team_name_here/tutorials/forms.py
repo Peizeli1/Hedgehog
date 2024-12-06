@@ -177,4 +177,11 @@ class CalendarFilterForm(forms.Form):
         widget=forms.NumberInput(attrs={'placeholder': 'Enter Year'}),
     )
 
+class BookingStatusForm(forms.Form):
+    booking_id = forms.IntegerField(widget=forms.HiddenInput())
+    action = forms.ChoiceField(
+        choices=[('accept', 'Accept'), ('reject', 'Reject')],
+        widget=forms.HiddenInput(),
+    )
+
 

@@ -1,4 +1,5 @@
 import datetime
+from urllib import request
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
@@ -26,6 +27,15 @@ from .forms import InvoiceForm
 from .forms import CalendarFilterForm
 import calendar
 from django.urls import reverse_lazy
+from django.views.generic import TemplateView
+from .models import Booking
+from .forms import BookingStatusForm
+from .models import TutorsInvoice
+from datetime import datetime, date, timedelta
+from django.shortcuts import redirect, get_object_or_404
+from .models import Course
+from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponse
 
 
 def get_user_data(user):
@@ -333,66 +343,140 @@ class TutorsHomePageView(LoginRequiredMixin, FormView):
     
 
 class TutorsInvoicesView(LoginRequiredMixin, TemplateView):
-    """Display the invoices page for tutors."""
-    template_name = "tutors_invoices.html"  # Use the correct template name
+    template_name = "tutors_invoices.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add any invoice-related context data here if needed
-        context['invoices'] = []  # Replace with actual data or query your database
+        if hasattr(self.request.user, 'tutor'):
+            tutor = self.request.user.tutor
+            invoices = TutorsInvoice.objects.filter(tutor=tutor)
+            context['invoices'] = invoices
+        else:
+            context['invoices'] = []
+            context['info_message'] = "No invoices available for this user."
+        context['year'] = datetime.now().year
         return context
 
 
 class TutorsCalendarView(LoginRequiredMixin, TemplateView):
-    """Display the calendar page for tutors."""
-    template_name = "tutors_calendar.html"  # Update to match your desired template name
+    template_name = "tutors_calendar.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = datetime.today()
 
-        # Get the first and last day of the current month
+        # Define current month and date range
+        today = date.today()
         current_month_start = today.replace(day=1)
-        _, last_day = monthrange(today.year, today.month)  # Get last day of the month
-
-        # Prepare start of next month for filtering
+        _, last_day = monthrange(today.year, today.month)
         next_month_start = current_month_start + timedelta(days=last_day)
 
-        # Filter courses assigned to the logged-in tutor for the current month
+        # Fetch courses and bookings
         courses = Course.objects.filter(
-            tutor__user=self.request.user,
-            time_slot__gte=current_month_start,
-            time_slot__lt=next_month_start
+            tutor__isnull=False,  # Ensure there's a tutor
+            student__isnull=False  # Ensure there's a student
         )
+        bookings = Booking.objects.filter(status="Accepted")
 
-        # Organize courses by date
+        # Organize events by date
         events = {}
         for course in courses:
-            date_str = course.time_slot.strftime('%Y-%m-%d')  # Format date as YYYY-MM-DD
-            if date_str not in events:
-                events[date_str] = []
-            events[date_str].append({
-                'course_name': course.course_type.name,
-                'time': course.time_slot.strftime('%I:%M %p'),
-                'student': course.student.user.full_name(),
-                'location': course.location,
-                'duration': course.duration,
-            })
+            # Combine time_slot with the current date
+            try:
+                course_date = datetime.combine(today, course.time_slot)  # Combine date + time
+                date_str = course_date.strftime('%Y-%m-%d')  # Format as string
+                if date_str not in events:
+                    events[date_str] = []
+                events[date_str].append({
+                    'course_id': course.id,
+                    'course_name': course.course_type.name,
+                    'time': course_date.strftime('%I:%M %p'),
+                    'student': course.student.user.full_name(),
+                    'status': course.status,
+                })
+            except Exception as e:
+                # Handle edge cases where time_slot is invalid
+                print(f"Error processing course: {course.id}, error: {e}")
+                continue
 
-        # Add data to the context
-        context['year'] = today.year
-        context['month'] = today.strftime('%B')
-        context['days'] = range(1, last_day + 1)  # List days in the current month
-        context['events'] = events
+        for booking in bookings:
+            # Combine time_slot with current date
+            try:
+                booking_date = datetime.combine(today, booking.course.time_slot)
+                date_str = booking_date.strftime('%Y-%m-%d')
+                if date_str not in events:
+                    events[date_str] = []
+                events[date_str].append({
+                    'booking_id': booking.id,
+                    'course_name': booking.course.course_type.name,
+                    'time': booking_date.strftime('%I:%M %p'),
+                    'student': booking.student.user.full_name(),
+                    'status': "Accepted Booking",
+                })
+            except Exception as e:
+                # Handle edge cases
+                print(f"Error processing booking: {booking.id}, error: {e}")
+                continue
+
+        # Pass the data to the template
+        context.update({
+            'today': today,
+            'year': today.year,
+            'month': today.strftime('%B'),
+            'days': [today.replace(day=i) for i in range(1, last_day + 1)],
+            'events': events,
+            'form': BookingStatusForm(),
+        })
         return context
-    
-class TutorsRequestsView(LoginRequiredMixin, TemplateView):
-    """Display the Requests page for tutors."""
+
+class TutorsRequestsView(TemplateView):
     template_name = "tutors_requests.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add any context data for the Requests page if needed
-        context['message'] = "This is the Requests page."
+
+        # Fetch all pending bookings
+        bookings = Booking.objects.filter(status="Pending")
+        context["bookings"] = bookings
         return context
+
+    def post(self, request, *args, **kwargs):
+        # Retrieve form data
+        booking_id = request.POST.get("booking_id")
+        action = request.POST.get("action")
+
+        # Validate the booking ID and action
+        if not booking_id or not action:
+            return HttpResponse("Invalid form submission.", status=400)
+
+        try:
+            # Retrieve the booking object
+            booking = Booking.objects.get(id=booking_id)
+
+            # Update the booking status based on the action
+            if action == "accept":
+                booking.accept()
+            elif action == "reject":
+                booking.reject()
+            else:
+                return HttpResponse("Invalid action.", status=400)
+
+        except Booking.DoesNotExist:
+            return HttpResponse("Booking not found.", status=404)
+
+        # Redirect back to the requests page
+        return redirect("tutors_requests")
+
+@login_required
+def mark_course_complete(request, course_id):
+    """Mark a course as completed."""
+    course = get_object_or_404(Course, id=course_id, tutor__user=request.user)
+
+    if course.status != "Completed":
+        course.status = "Completed"
+        course.save()
+        messages.success(request, f"Course '{course.course_type.name}' marked as completed!")
+    else:
+        messages.info(request, f"Course '{course.course_type.name}' is already marked as completed.")
+
+    return HttpResponseRedirect(reverse('tutors_calendar'))
 

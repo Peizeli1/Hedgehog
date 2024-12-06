@@ -3,16 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoices - Hedgehog Tutoring</title>
+    <title>Your Invoices - Hedgehog Tutoring</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-message, .empty-message {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            margin: 20px 0;
+        }
+
+        .invoice-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fdfdfd;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .invoice-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .invoice-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .invoice-id {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .invoice-amount {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 18px;
+        }
+
+        .invoice-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+            background-color: #28a745;
+        }
+
+        .invoice-status.unpaid {
+            background-color: #dc3545;
+        }
+
+        .invoice-status.pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
 </head>
 <body>
     <h1>Your Invoices</h1>
-    <ul>
-        {% for invoice in invoices %}
-            <li>{{ invoice }}</li>
-        {% empty %}
-            <p>No invoices available.</p>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        {% if info_message %}
+            <p class="info-message">{{ info_message }}</p>
+        {% else %}
+            {% if invoices %}
+                <ul class="invoice-list">
+                    {% for invoice in invoices %}
+                        <li class="invoice-item">
+                            <div class="invoice-details">
+                                <span class="invoice-id">Invoice ID: {{ invoice.id }}</span>
+                                <span class="invoice-amount">Amount: ${{ invoice.amount }}</span>
+                            </div>
+                            <span class="invoice-status {{ invoice.status|lower }}">
+                                {{ invoice.status }}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-message">No invoices available at the moment.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <footer>
+        &copy; {{ year }} Hedgehog Tutoring. All rights reserved.
+    </footer>
 </body>
 </html>

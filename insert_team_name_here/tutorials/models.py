@@ -2,6 +2,8 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from. import utils
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 
 class User(AbstractUser):
@@ -263,16 +265,6 @@ class CourseEnrollment(models.Model):
         :return: True 如果学生已经注册了该课程，否则 False
         """
         return CourseEnrollment.objects.filter(student=student, course=course, is_active=True).exists()
-
-
-class Booking(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    booking_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[('Pending', '待处理'), ('Confirmed', '已确认'), ('Cancelled', '已取消')])
-
-    def __str__(self):
-        return f"{self.student.user.username} - {self.course.name} ({self.status})"
     
 class Tutor(models.Model):
     """Tutor-specific data associated with a user."""
@@ -289,6 +281,44 @@ class Tutor(models.Model):
     def __str__(self):
         return self.user.full_name()
 
+
+class Course(models.Model):
+    """
+    Course model to represent a lesson scheduled between a student and a tutor.
+    """
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='courses_enrolled'
+    )
+    tutor = models.ForeignKey(
+        Tutor,
+        on_delete=models.CASCADE,
+        related_name='courses_taught'
+    )
+    course_type = models.ForeignKey(
+        CourseType,
+        on_delete=models.PROTECT,
+        related_name='courses_offered',
+        help_text="The type of course being taught."
+    )
+    day_of_week = models.CharField(max_length=10, help_text="E.g., Monday, Tuesday")
+    time_slot = models.TimeField()
+    duration = models.IntegerField(help_text="Duration in minutes.")
+    location = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=50,
+        default="Scheduled",
+        help_text="Status of the course (e.g., Scheduled, Cancelled, Completed)."
+    )
+
+    def __str__(self):
+        """
+        String representation of the course.
+        """
+        return f"{self.student.user.full_name()} - {self.tutor.user.full_name()} ({self.course_type.name})"
+
+
 class Invoice(models.Model):
     """Invoice model to track billing information for a student."""
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -298,6 +328,63 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"Invoice {self.id} - {self.student.user.full_name()}"
+
+class TutorsInvoice(models.Model):
+    """Invoice model to track invoices for a tutor."""
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=50, default="Unpaid", help_text="E.g., Paid, Unpaid.")
+
+    def __str__(self):
+        return f"Invoice {self.id} - {self.student.user.full_name()}"
+
+
+@receiver(post_save, sender=Course)
+def create_tutors_invoice(sender, instance, **kwargs):
+    """
+    Create a TutorsInvoice when a lesson is marked as completed.
+    """
+    if instance.status == "Completed":
+        # Check if the invoice already exists to avoid duplicates
+        invoice_exists = TutorsInvoice.objects.filter(
+            tutor=instance.tutor,
+            amount=instance.course_type.price,
+        ).exists()
+        if not invoice_exists:
+            TutorsInvoice.objects.create(
+                tutor=instance.tutor,
+                amount=instance.course_type.price,
+                status="Unpaid",
+            )
+
+class Booking(models.Model):
+    """
+    Represents a booking request for a course by an admin to a tutor.
+    """
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    booking_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Accepted', 'Accepted'), ('Rejected', 'Rejected')],
+        default='Pending',
+    )
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="bookings_requested")
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.course.course_type.name} ({self.status})"
+
+    def accept(self):
+        """Mark the booking as accepted."""
+        self.status = "Accepted"
+        self.save()
+
+    def reject(self):
+        """Mark the booking as rejected."""
+        self.status = "Rejected"
+        self.save()
+
+
 
 
 

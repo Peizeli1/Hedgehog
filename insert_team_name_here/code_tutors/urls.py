@@ -53,11 +53,11 @@ urlpatterns = [
     # Invoice related routing (assuming you have implemented views related to viewing invoices, paying invoices, etc. in view functions）
     path('invoice/', views.invoice_view, name='invoice'),
 
-    path('tutors/', views.TutorsView.as_view(), name='tutors'),
+    path('tutors/', views.TutorsHomePageView.as_view(), name='tutors'),
 
-    path('tutors_invoices/', views.InvoicesTutors.as_view(), name='tutors_invoices'),
+    path('tutors_invoices/', views.TutorsInvoicesView.as_view(), name='tutors_invoices'),
 
-    path('tutors_calendar/', views.CalendarView.as_view(), name='tutors_calendar'),
+    path('tutors_calendar/', views.TutorsCalendarView.as_view(), name='tutors_calendar'),
 
     path('tutors_requests/', views.TutorsRequestsView.as_view(), name='tutors_requests'),  
 
