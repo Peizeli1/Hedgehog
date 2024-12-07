@@ -1,10 +1,10 @@
-{% extends 'base_content.html' %}
+ <!-- {% extends 'base_content.html' %}
 
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-  <!-- 导航栏 -->
+  <!-- 导航栏 
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand" href="{% url 'dashboard' %}">Code Tutors Dashboard</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,4 +161,100 @@
     </div>
   </div>
 </div>
+{% endblock %} -->
+
+
+{% extends 'base_content.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<body>
+  <div class="dash-card rounded centered shadow-lg">
+    <div class="dash-content">
+      <h2 class="text-center">Welcome to Your Dashboard, {{ user.username }}</h2>
+      <div class="summary-cards d-flex justify-content-between">
+        <div class="card flex-item rounded p-3 shadow-sm">
+          <h6>Account Summary</h6>
+          <p>Registration Date: {{ user.date_joined }}</p>
+          <p>Email: {{ user.email }}</p>
+        </div>
+        <div class="card flex-item rounded p-3 shadow-sm">
+          <h6>Notifications</h6>
+          <p>You have {{ unread_notifications_count }} unread notifications.</p>
+          {% if unread_notifications_count > 0 %}
+          <a href="#" class="btn btn-sm btn-primary">View Notifications</a>
+          {% endif %}
+        </div>
+        <div class="card flex-item rounded p-3 shadow-sm">
+          <h6>My Courses</h6>
+          <p>You are currently enrolled in {{ course_count }} courses.</p>
+          <p>Next class: {{ next_course_name }} at {{ next_course_datetime }}</p>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mt-4">Available Courses</h2>
+    <div class="table-responsive">
+      <table id="posts" class="table table-striped">
+        {% if available_courses|length == 0 %}
+        <p>No courses are available to book at the moment. Please check back later.</p>
+        {% else %}
+        <thead>
+          <tr>
+            <th style="width:25%">Course Name</th>
+            <th style="width:25%">Tutor</th>
+            <th style="width:15%">Start Date</th>
+            <th style="width:15%">End Date</th>
+            <th style="width:10%">Cost</th>
+            <th style="width:5%">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in available_courses %}
+          <tr>
+            <td>{{ course.name }}</td>
+            <td>{{ course.tutor.name }}</td>
+            <td>{{ course.start_date }}</td>
+            <td>{{ course.end_date }}</td>
+            <td>{{ course.cost }}</td>
+            <td><a href="#" class="btn btn-sm btn-primary">Book</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+
+    <h2 class="mt-4">Invoices</h2>
+    {% if invoices|length > 0 %}
+    <div class="table-responsive">
+      <table id="posts" class="table table-striped">
+        <thead>
+          <tr>
+            <th style="width:10%">Invoice ID</th>
+            <th style="width:30%">Course</th>
+            <th style="width:20%">Amount</th>
+            <th style="width:20%">Due Date</th>
+            <th style="width:20%">Payment Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for invoice in invoices %}
+          <tr>
+            <td>{{ invoice.id }}</td>
+            <td>{{ invoice.course.name }}</td>
+            <td>{{ invoice.amount }}</td>
+            <td>{{ invoice.due_date }}</td>
+            <td>{{ invoice.payment_status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>You currently have no outstanding invoices.</p>
+    {% endif %}
+  </div>
+</body>
 {% endblock %}
