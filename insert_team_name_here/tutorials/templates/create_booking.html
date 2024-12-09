@@ -4,17 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Booking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1; /* Makes the main content take up available space */
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        label, select, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Request is Sent</h1>
-    <form method="post">
-        {% csrf_token %}
-        <div>
-            <label for="id_studentdescription">Description</label>
-            {{ form.studentdescription }}
-        </div>
-        <button type="submit" style="padding: 10px 20px; font-size: 16px;">Send Request</button>
-    </form>
-    <p><a href="{% url 'home' %}">Back to Home</a></p>
+    <main>
+        <h1>Welcome, [Student Username]</h1>
+        <h2>Programming Languages and Prices</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Programming Language</th>
+                    <th>Price (GBP)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Python</td>
+                    <td>50</td>
+                </tr>
+                <tr>
+                    <td>JavaScript</td>
+                    <td>40</td>
+                </tr>
+                <tr>
+                    <td>Java</td>
+                    <td>60</td>
+                </tr>
+                <tr>
+                    <td>C++</td>
+                    <td>70</td>
+                </tr>
+                <tr>
+                    <td>Ruby</td>
+                    <td>45</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" style="padding: 10px 20px;">Send Request</button>
+        </form>
+    </main>
+    <footer>
+        <p><a href="{% url 'home' %}">Back to Home</a></p>
+    </footer>
 </body>
 </html>

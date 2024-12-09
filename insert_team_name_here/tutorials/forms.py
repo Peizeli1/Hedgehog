@@ -94,7 +94,7 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
     """Form enabling unregistered users to sign up."""
 
     class Meta:
-        """Form options."""
+
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
@@ -118,18 +118,19 @@ class StudentBookingForm(forms.ModelForm):
 
     class Meta:
         model = Booking
-        fields = ['student', 'course']
+        fields = ['student', 'studentdescription', 'module']
 
         widgets = {
             'studentdescription': forms.Textarea(
-                attrs={'rows': 3, 'placeholder': 'Add a note or details about your booking.'}),
+                attrs={'rows': 3, 'placeholder': 'Add a note or details for your tutor.'}),
         }
 
     def __init__(self, *args, **kwargs):
-        """Custom initialization for form."""
+        student = kwargs.pop('student', None)
         super().__init__(*args, **kwargs)
-        # Example: Setting placeholder text or making fields read-only
-        self.fields['student'].widget.attrs.update({'readonly': True})
+        if student:
+            self.fields['student'].initial = student
+            self.fields['student'].widget.attrs.update({'readonly': True})
 
 
 
