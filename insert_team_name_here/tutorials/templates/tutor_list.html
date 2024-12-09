@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container-fluid">
+  <h2 class="text-center mb-4">Tutors</h2>
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Expertise</th>
+        <th>Availability</th>
+        <th>Advanced Courses</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tutor in tutors %}
+      <tr>
+        <td>{{ tutor.user.full_name }}</td>
+        <td>{{ tutor.expertise }}</td>
+        <td>
+          {% if tutor.is_available %}
+          <span class="badge bg-success">Available</span>
+          {% else %}
+          <span class="badge bg-danger">Not Available</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if tutor.advanced_courses.exists %}
+          <ul>
+            {% for course in tutor.advanced_courses.all %}
+            <li>{{ course.name }}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <span class="text-muted">No advanced courses</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not tutors %}
+  <p class="text-center text-muted">No tutors found.</p>
+  {% endif %}
+</div>
+{% endblock %}

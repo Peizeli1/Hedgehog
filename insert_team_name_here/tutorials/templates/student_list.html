@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container-fluid">
+  <h2 class="text-center mb-4">Students</h2>
+  
+  {% if students %}
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Programming Level</th>
+          <th>Phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ student.user.full_name }}</td>
+            <td>{{ student.user.email }}</td>
+            <td>{{ student.programming_level }}</td>
+            <td>{{ student.phone }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info text-center mt-4">
+      <strong>No students found.</strong>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

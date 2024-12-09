@@ -1,0 +1,86 @@
+{% extends 'base.html' %} {% block body %}
+<div class="container-fluid">
+  <h2 class="text-center mb-4">Available Courses</h2>
+  {% if available_courses %}
+  <form method="post">
+    {% csrf_token %}
+    <!-- Table -->
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Course Name</th>
+          <th>Tutor</th>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Duration</th>
+          <th>Location</th>
+          <th>Select</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for course in available_courses %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ course.course_type.name }}</td>
+          <td>{{ course.tutor.user.full_name }}</td>
+          <td>{{ course.day_of_week }}</td>
+          <td>{{ course.time_slot }}</td>
+          <td>{{ course.duration }} minutes</td>
+          <td>{{ course.location }}</td>
+          <td>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#courseConfirmModal"
+              onclick="loadConfirmModal('{{ course.id }}')"
+            >
+              Book
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <!-- Hidden Input for Student ID -->
+    <input
+      type="hidden"
+      name="student_id"
+      value="{{ request.user.student.id }}"
+    />
+  </form>
+  {% else %}
+  <div class="alert alert-info text-center mt-4">
+    <strong
+      >No courses available for booking at this time. Please check back
+      later.</strong
+    >
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function loadConfirmModal(courseId) {
+    const url = `/course_booking/confirm/${courseId}/`; // Fetch confirmation modal content
+    fetch(url, {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest", // Identify as an AJAX request
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load modal content.");
+        }
+        return response.text(); // Parse as plain text HTML
+      })
+      .then((html) => {
+        document.getElementById("courseConfirmModalBody").innerHTML = html;
+      })
+      .catch((error) => {
+        console.error("Error loading modal content:", error);
+        alert("Failed to load modal content.");
+      });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container mt-4">
+  <h1 class="text-center">Invoices</h1>
+  
+  {% if invoices %}
+    <table class="table table-bordered table-striped mt-4">
+      <thead class="thead-dark">
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Due Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ invoice.student.user.full_name }}</td>
+            <td>${{ invoice.amount }}</td>
+            <td>{{ invoice.status }}</td>
+            <td>{{ invoice.due_date }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info text-center mt-4">
+      <strong>No invoices found.</strong>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
