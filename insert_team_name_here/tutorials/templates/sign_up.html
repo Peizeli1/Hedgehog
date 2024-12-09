@@ -1,40 +1,34 @@
+{% extends 'base.html' %}
 
-{#{% extends 'base_content.html' %}#}
-{#{% block content %}#}
-{#<div class="container">#}
-{#  <!-- Signup Section -->#}
-{#  <div class="row">#}
-{#    <div class="col-12">#}
-{#      <div class="home-wrapper">#}
-{#        <div class="signup-card">#}
-{#          <h1>Sign Up</h1>#}
-{#          <p class="sign-text">Already a member? Login <a href='{% url 'log_in' %}'>#}
-{#            here#}
-{#          </a></p>#}
-{#          <form action="{% url 'sign_up' %}" method="post">#}
-{#            {% csrf_token %}#}
-{#            {% include 'partials/bootstrap_form.html' with form=form %}#}
-{#            <input type="submit" value="Sign Up" class="btn btn-secondary">#}
-{#          </form>#}
-{#        </div>#}
-{#      </div>#}
-{#    </div>#}
-{#  </div>#}
-{#</div>#}
-{#{%endblock%}#}
-
-{% extends 'base_content.html' %}
-{% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-12">
-      <h1>Sign up</h1>
-      <form action="{% url 'sign_up' %}" method="post">
-        {% csrf_token %}
-        {% include 'partials/bootstrap_form.html' with form=form %}
-        <input type="submit" value="Sign up" class="btn btn-primary">
-      </form>
-    </div>
+{% block body %}
+<div class="center-container">
+  <div class="signup-card">
+    <h1 class="text-center mb-4">Sign Up</h1>
+    <p class="text-center text-muted">Already a member? <a href="{% url 'tutorials:log_in' %}">Log in here</a>.</p>
+    <form action="{% url 'tutorials:sign_up' %}" method="post">
+      {% csrf_token %}
+      
+      {% if form %}
+        {% for field in form %}
+          <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-text small">{{ field.help_text }}</div>
+            {% endif %}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="alert alert-danger" role="alert">
+          Unable to load the sign-up form. Please try again later.
+        </div>
+      {% endif %}
+      
+      <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+    </form>
   </div>
 </div>
 {% endblock %}

@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'widget_tweaks',
-    'tutorials',
+    'tutorials.apps.TutorialsConfig',
 ]
 
 MIDDLEWARE = [
@@ -119,11 +119,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = 'assets/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -133,11 +131,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # User model for authentication and login purposes
 AUTH_USER_MODEL = 'tutorials.User'
 
-# Login URL for redirecting users from login protected views
-LOGIN_URL = 'log_in'
+# Redirect users to the dashboard after a successful login
+LOGIN_REDIRECT_URL = 'tutorials:dashboard'
 
-# URL where @login_prohibited redirects to
-REDIRECT_URL_WHEN_LOGGED_IN = 'dashboard'
+# Redirect users to the home page after logging out
+LOGOUT_REDIRECT_URL = 'tutorials:home'
+
+LOGIN_URL = 'tutorials:log_in'
 
 # Convert Django ERROR messages to Bootstrap DANGER messages
 MESSAGE_TAGS = {

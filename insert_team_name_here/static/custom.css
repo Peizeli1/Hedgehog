@@ -1,3 +1,8 @@
+html, body {
+  height: 100%; /* Ensure full height for flex alignment */
+  margin: 0; /* Remove any default margins */
+}
+
 /* General Body Style */
 body {
   font-family: "DM Sans", sans-serif;
@@ -6,7 +11,7 @@ body {
   background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #d3d3d3 33px), 
                     repeating-linear-gradient(#317bd055, #317bd0);
   margin: 0;
-  padding: 0;
+  padding-top: 4rem; /* Add padding to prevent content from being hidden behind the navbar */
 }
 
 .logo {
@@ -14,18 +19,56 @@ body {
   height: auto;
 }
 
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000; /* Ensures the navbar stays above content */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Adds slight shadow for better separation */
+}
+
+/* Content below navbar */
+main.container {
+  padding-top: 5rem; /* Ensures content starts below the fixed navbar */
+}
+
 /* Full-page container */
 .container {
+  margin-top: 1rem; /* Adjusted margin for proper spacing */
+  text-align: center; /* Center-aligns content inside the container */
+}
+
+.container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Heading Styling */
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Home Page Specific Styles */
+.home-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
 }
 
-/* Home Page Specific Styles */
 .home-wrapper .h-100 {
   min-height: 100vh;
   height: 100vh;
+}
+
+main {
+  margin-top: 4rem;
 }
 
 .home-wrapper h1.cover-heading {
@@ -135,7 +178,15 @@ input:focus, textarea:focus {
   box-shadow: 0px 0px 5px rgba(13, 110, 253, 0.5);
 }
 
-/* Login and Signup Page Styles */
+/* Login and Signup Card Wrapper */
+.center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 4rem); /* Adjust for fixed navbar height */
+}
+
+/* Login and Signup Card Styles */
 .login-card, .signup-card {
   background-color: #e6e9f0;
   opacity: 1;
@@ -143,9 +194,9 @@ input:focus, textarea:focus {
   padding: 2rem;
   width: 30vw;
   box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
-  border: 0.2rem solid #393e46; 
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 
-              inset 0 0 8px rgba(255, 255, 255, 0.6); 
+  border: 0.2rem solid #393e46;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05),
+              inset 0 0 8px rgba(255, 255, 255, 0.6);
   border-radius: 0.3rem;
 }
 
@@ -156,13 +207,10 @@ input:focus, textarea:focus {
   text-align: center;
 }
 
-
-.sign-text{
+.sign-text {
   text-align: center;
   color:#343a40;
-} 
-
-
+}
 
 /* Alerts */
 .alert {
@@ -210,7 +258,20 @@ p {
   font-weight: 400;
 }
 
-/* Hyperlinks */
+/* Table Styling */
+.table {
+  width: 100%;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1rem; /* Adds spacing between heading and table */
+}
+
+.table th, .table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
 a {
   color: #0d6efd;
   text-decoration: none;
@@ -224,8 +285,10 @@ a:hover {
 
 /* Responsive Utilities */
 @media (max-width: 768px) {
+  .container h2 {
+    font-size: 1.5rem; /* Adjust heading size for smaller screens */
+  }
   .login-card, .signup-card {
     padding: 1.5rem;
   }
 }
-

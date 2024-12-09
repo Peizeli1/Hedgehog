@@ -1,61 +1,29 @@
-{% extends 'base_content.html' %}
+{% extends 'base.html' %}
 
-{% block title %}Dashboard{% endblock %}
-
-{% block content %}
+{% block body %}
 <div class="container-fluid">
-  <!-- 导航栏 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="{% url 'dashboard' %}">Code Tutors Dashboard</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'student_list' %}">学生列表</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'tutor_list' %}">导师列表</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'course_booking' %}">课程预订</a>
-        </li>
-      </ul>
-      <ul class="navbar-nav">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            {{ user.username }}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-            <a class="dropdown-item" href="{% url 'profile_update' %}">个人资料设置</a>
-            <a class="dropdown-item" href="{% url 'password_change' %}">修改密码</a>
-            <a class="dropdown-item" href="{% url 'schedule' user_type='student' user_id=user.id %}">我的课程安排</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{% url 'logout' %}">退出登录</a>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </nav>
-
   <div class="row mt-4">
     <div class="col-md-8">
-      <h1 class="display-4">欢迎来到您的控制面板，{{ user.username }}</h1>
+      <h1 class="display-4">Welcome to your dashboard, {{ user.username }}</h1>
       {% if user.is_new_user %}
-        <div class="alert alert-info" role="alert">
-          欢迎加入 Code Tutors！您可以先完善个人资料，<a href="{% url 'profile_update' %}">点击这里</a>。还可以查看我们的 <a href="#">快速入门指南</a>，了解如何开始学习或授课。
-        </div>
+      <div class="alert alert-info" role="alert">
+        Welcome to Hedgehog Tutoring! You can start by completing your profile
+        <a href="{% url 'tutorials:profile_update' %}">here</a>. You may also
+        check out our <a href="#">Quick Start Guide</a> for tips on how to begin
+        learning or teaching.
+      </div>
       {% endif %}
-      <p class="lead">这里是您管理个人信息、课程安排等的核心区域。</p>
+      <p class="lead">
+        This is the central hub for managing your information, course schedules,
+        and more.
+      </p>
     </div>
     <div class="col-md-4">
       <div class="card bg-light">
         <div class="card-body">
-          <h5 class="card-title">账户信息摘要</h5>
-          <p class="card-text">注册日期：{{ user.date_joined }}</p>
-          <p class="card-text">邮箱：{{ user.email }}</p>
+          <h5 class="card-title">Account Summary</h5>
+          <p class="card-text">Registration Date: {{ user.date_joined }}</p>
+          <p class="card-text">Email: {{ user.email }}</p>
         </div>
       </div>
     </div>
@@ -65,28 +33,37 @@
     <div class="col-md-4">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">未读通知</h5>
-          <p class="card-text">您有 {{ unread_notifications_count }} 条未读通知。</p>
-          {% if unread_notifications_count > 0 %}
-            <a href="#" class="btn btn-sm btn-primary">查看通知</a>
-          {% endif %}
+          <h5 class="card-title">Unread Notifications</h5>
+          <p class="card-text">
+            You have <span id="unreadNotificationsCount">{{ unread_notifications_count }}</span> unread notifications.
+          </p>
+          <button
+            class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#notificationsModal"
+            onclick="loadNotifications()"
+          >
+            View Notifications
+          </button>
         </div>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">课程数量</h5>
-          <p class="card-text">您当前共参与了 {{ course_count }} 门课程。</p>
+          <h5 class="card-title">Courses Enrolled</h5>
+          <p class="card-text">
+            You are currently enrolled in {{ course_count }} courses.
+          </p>
         </div>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">近期课程活动</h5>
-          <p class="card-text">下节课时间：{{ next_course_datetime }}</p>
-          <p class="card-text">课程主题：{{ next_course_name }}</p>
+          <h5 class="card-title">Upcoming Course</h5>
+          <p class="card-text">Next Class: {{ next_course_datetime }}</p>
+          <p class="card-text">Course Topic: {{ next_course_name }}</p>
         </div>
       </div>
     </div>
@@ -95,26 +72,29 @@
   <div class="row mt-4">
     <div class="col-md-12">
       <div class="card">
-        <div class="card-header">
-          课程预订
-        </div>
+        <div class="card-header">My Bookings</div>
         <div class="card-body">
-          {% if available_courses|length == 0 %}
-            <p class="card-text">当前没有可预订的课程，请稍后再试。</p>
+          {% if user.student.enrollments.exists %}
+          <ul class="list-group">
+            {% for enrollment in user.student.enrollments.all %}
+            <li class="list-group-item">
+              <p>
+                <strong>Course:</strong> {{ enrollment.course.course_type.name }}
+              </p>
+              <p><strong>Day:</strong> {{ enrollment.course.day_of_week }}</p>
+              <p><strong>Time:</strong> {{ enrollment.course.time_slot }}</p>
+              <p>
+                <strong>Tutor:</strong> {{ enrollment.course.tutor.user.full_name }}
+              </p>
+            </li>
+            {% endfor %}
+          </ul>
           {% else %}
-            <p class="card-text">以下是您可以预订的课程：</p>
-            <ul>
-              {% for course in available_courses %}
-                <li>
-                  <p>课程名称：{{ course.name }}</p>
-                  <p>导师：{{ course.tutor.name }}</p>
-                  <p>开始日期：{{ course.start_date }}</p>
-                  <p>结束日期：{{ course.end_date }}</p>
-                  <p>费用：{{ course.cost }}</p>
-                  <a href="{% url 'course_booking_confirm' course_id=course.id %}" class="btn btn-sm btn-primary">预订此课程</a>
-                </li>
-              {% endfor %}
-            </ul>
+          <p class="text-muted">
+            You have no bookings yet.
+            <a href="{% url 'tutorials:course_booking' %}">Book a course</a>
+            now!
+          </p>
           {% endif %}
         </div>
       </div>
@@ -124,24 +104,24 @@
   <div class="row mt-4">
     <div class="col-md-12">
       <div class="card">
-        <div class="card-header">
-          发票信息
-        </div>
+        <div class="card-header">Invoice Information</div>
         <div class="card-body">
           {% if invoices|length > 0 %}
-            <ul>
-              {% for invoice in invoices %}
-                <li>
-                  <p>发票编号：{{ invoice.id }}</p>
-                  <p>课程名称：{{ invoice.course.name }}</p>
-                  <p>金额：{{ invoice.amount }}</p>
-                  <p>到期日期：{{ invoice.due_date }}</p>
-                  <p>支付状态：{{ invoice.payment_status }}</p>
-                </li>
-              {% endfor %}
-            </ul>
+          <ul class="list-group">
+            {% for invoice in invoices %}
+            <li class="list-group-item">
+              <p><strong>Invoice ID:</strong> {{ invoice.id }}</p>
+              <p><strong>Course Name:</strong> {{ invoice.course.name }}</p>
+              <p><strong>Amount:</strong> {{ invoice.amount }}</p>
+              <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
+              <p>
+                <strong>Payment Status:</strong> {{ invoice.payment_status }}
+              </p>
+            </li>
+            {% endfor %}
+          </ul>
           {% else %}
-            <p class="card-text">您目前没有未处理的发票。</p>
+          <p class="card-text">You currently have no pending invoices.</p>
           {% endif %}
         </div>
       </div>
@@ -151,14 +131,97 @@
   <div class="row mt-4">
     <div class="col-md-12">
       <div class="card">
-        <div class="card-header">
-          系统公告
-        </div>
+        <div class="card-header">System Announcements</div>
         <div class="card-body">
-          <p class="card-text">这里是一些重要的系统公告信息，例如系统维护时间、新功能上线通知等。</p>
+          <p class="card-text">
+            This section includes important system announcements, such as
+            maintenance schedules and new feature updates.
+          </p>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Notifications Modal -->
+  <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Message</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="notificationsTableBody">
+              <!-- Notifications will be dynamically loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript to handle notifications -->
+  <script>
+    function loadNotifications() {
+      fetch('/notifications/', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then(response => response.json())
+        .then(data => {
+          const tableBody = document.getElementById('notificationsTableBody');
+          tableBody.innerHTML = ''; // Clear existing rows
+          data.notifications.forEach((notification, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${notification.message}</td>
+              <td>${notification.created_at}</td>
+              <td>
+                ${
+                  !notification.is_read
+                    ? `<button class="btn btn-sm btn-success" onclick="markAsRead(${notification.id})">Mark as Read</button>`
+                    : 'Read'
+                }
+              </td>
+            `;
+            tableBody.appendChild(row);
+          });
+        })
+        .catch(error => console.error('Error loading notifications:', error));
+    }
+
+    function markAsRead(notificationId) {
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      fetch('/notifications/', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrftoken, 
+        },
+        body: new URLSearchParams({ notification_id: notificationId }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            loadNotifications(); // Reload notifications
+            document.getElementById('unreadNotificationsCount').textContent = data.unread_count;
+          }
+        })
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+  </script>
 </div>
 {% endblock %}
