@@ -1,11 +1,13 @@
 {% extends 'base.html' %} {% block body %}
-<div class="container-fluid">
+<div class="home-wrapper">
+<div class="tutor-card">
   <h2 class="text-center mb-4">Available Courses</h2>
+  <div class="table-responsive"></div>
   {% if available_courses %}
   <form method="post">
     {% csrf_token %}
     <!-- Table -->
-    <table class="table table-bordered table-striped">
+    <table id="posts" class="table table-striped">
       <thead>
         <tr>
           <th>#</th>
