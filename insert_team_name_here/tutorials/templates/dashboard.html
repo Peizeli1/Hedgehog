@@ -223,58 +223,85 @@
 
 </div>
 
-  <!-- JavaScript to handle notifications -->
-  <script>
-    function loadNotifications() {
-      fetch('/notifications/', {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      })
-        .then(response => response.json())
-        .then(data => {
-          const tableBody = document.getElementById('notificationsTableBody');
-          tableBody.innerHTML = ''; // Clear existing rows
-          data.notifications.forEach((notification, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${index + 1}</td>
-              <td>${notification.message}</td>
-              <td>${notification.created_at}</td>
-              <td>
-                ${
-                  !notification.is_read
-                    ? `<button class="btn btn-sm btn-success" onclick="markAsRead(${notification.id})">Mark as Read</button>`
-                    : 'Read'
-                }
-              </td>
-            `;
-            tableBody.appendChild(row);
-          });
-        })
-        .catch(error => console.error('Error loading notifications:', error));
-    }
+  <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Message</th>
+              <th>Created At</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="notificationsTableBody">
+            <!-- Notifications will be dynamically loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function markAsRead(notificationId) {
-      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-      fetch('/notifications/', {
-        method: 'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': csrftoken, 
-        },
-        body: new URLSearchParams({ notification_id: notificationId }),
+<!-- JavaScript to handle notifications -->
+<script>
+  function loadNotifications() {
+    fetch('/notifications/', {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        const tableBody = document.getElementById('notificationsTableBody');
+        tableBody.innerHTML = ''; // Clear existing rows
+        data.notifications.forEach((notification, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${notification.message}</td>
+            <td>${notification.created_at}</td>
+            <td>
+              ${
+                !notification.is_read
+                  ? `<button class="btn btn-sm btn-success" onclick="markAsRead(${notification.id})">Mark as Read</button>`
+                  : 'Read'
+              }
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
       })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            loadNotifications(); // Reload notifications
-            document.getElementById('unreadNotificationsCount').textContent = data.unread_count;
-          }
-        })
-        .catch(error => console.error('Error marking notification as read:', error));
-    }
-  </script>
+      .catch(error => console.error('Error loading notifications:', error));
+  }
+
+  function markAsRead(notificationId) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/notifications/', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrftoken, 
+      },
+      body: new URLSearchParams({ notification_id: notificationId }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadNotifications(); // Reload notifications
+          document.getElementById('unreadNotificationsCount').textContent = data.unread_count;
+        }
+      })
+      .catch(error => console.error('Error marking notification as read:', error));
+  }
+</script>
 </div>
 {% endblock %}
