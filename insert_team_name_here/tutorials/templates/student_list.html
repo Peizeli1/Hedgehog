@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% block body %}
-<div class="container-fluid">
-  <h2 class="text-center mb-4">Students</h2>
+<div class="home-wrapper">
+  <div class="tutor-card">
+  <h2 class="text-center mb-4">List of Enrolled Students</h2>
   
   {% if students %}
-    <table class="table table-bordered table-striped">
-      <thead class="thead-dark">
+  <table id="posts" class="table table-striped">
+      <thead >
         <tr>
           <th>#</th>
           <th>Name</th>
