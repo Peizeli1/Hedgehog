@@ -1,174 +1,227 @@
-{% extends 'base.html' %}
+{% extends 'base_content.html' %}
 
 {% block body %}
-<div class="container-fluid">
-  <div class="row mt-4">
-    <div class="col-md-8">
-      <h1 class="display-4">Welcome to your dashboard, {{ user.username }}</h1>
-      {% if user.is_new_user %}
-      <div class="alert alert-info" role="alert">
-        Welcome to Hedgehog Tutoring! You can start by completing your profile
-        <a href="{% url 'tutorials:profile_update' %}">here</a>. You may also
-        check out our <a href="#">Quick Start Guide</a> for tips on how to begin
-        learning or teaching.
+<div class="dash-card rounded centered shadow-lg">
+  <div class="dash-content">
+    <h2 class="text-center">Welcome to Your Dashboard, {{ user.username }}</h2>
+    {% if user.is_new_user %}
+    <div class="alert alert-info" role="alert">
+      Welcome to Hedgehog Tutoring! You can start by completing your profile
+      <a href="{% url 'tutorials:profile_update' %}">here</a>. You may also
+      check out our <a href="#">Quick Start Guide</a> for tips on how to begin
+      learning or teaching.
+    </div>
+    {% endif %}
+    <p class="lead">
+      This is the central hub for managing your information, course schedules,
+      and more.
+    </p>
+    
+    <!-- User Account Information -->
+    <div class="summary-cards d-flex justify-content-between">
+      <div class="card flex-item rounded p-3 shadow-sm">
+        <h6>Account Summary</h6>
+        <p>Registration Date: {{ user.date_joined }}</p>
+        <p>Email: {{ user.email }}</p>
       </div>
+      <div class="card flex-item rounded p-3 shadow-sm">
+        <h6>Unread Notifications</h6>
+        <p>You have <span id="unreadNotificationsCount">{{ unread_notifications_count }}</span> unread notifications.</p>
+        <button
+          class="btn btn-sm btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#notificationsModal"
+          onclick="loadNotifications()"
+        >
+          View Notifications
+        </button>
+      </div>
+      <div class="card flex-item rounded p-3 shadow-sm">
+        <h6>My Courses</h6>
+        <p>You are currently enrolled in {{ course_count }} courses.</p>
+        <p class="card-text">Next Class: {{ next_course_datetime }}</p>
+        <p class="card-text">Course Topic: {{ next_course_name }}</p>
+      </div>
+    </div>
+
+    <!-- Conditional Calendar Rendering -->
+    <h2 class="text-center">Calendar for {{ month }} {{ year }}</h2>
+    <div class="ht-weekdays">
+      <div class="ht-weekday">Mon</div>
+      <div class="ht-weekday">Tue</div>
+      <div class="ht-weekday">Wed</div>
+      <div class="ht-weekday">Thu</div>
+      <div class="ht-weekday">Fri</div>
+      <div class="ht-weekday">Sat</div>
+      <div class="ht-weekday">Sun</div>
+    </div>
+    <div class="ht-calendar">
+      {% if user.student %}
+<!-- Display Calendar with Student's Lessons with Tutors -->
+{% for entry in events_by_day %}
+  <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
+    <span>{{ entry.day.day }}</span>
+    {% if entry.events %}
+      <div class="ht-event-container">
+        {% for event in entry.events %}
+          <div class="ht-event {% if event.status == 'Completed' %}ht-completed{% elif event.status == 'Upcoming' %}ht-upcoming{% endif %}">
+            <strong>{{ event.course_name }}</strong><br>
+            Time: {{ event.time }}<br>
+            <span class="ht-status">{{ event.status }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No events for this day.</p>
+    {% endif %}
+  </div>
+{% endfor %}
+      {% elif user.tutor %}
+        <!-- Display Calendar with Tutor's Lessons with Students -->
+        {% for entry in events_by_day %}
+          <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
+            <span>{{ entry.day.day }}</span>
+            {% if entry.events %}
+              <div class="ht-event-container">
+                {% for event in entry.events %}
+                  <div class="ht-event {% if event.status == 'Completed' %}ht-completed{% elif event.status == 'Upcoming' %}ht-upcoming{% endif %}">
+                    <strong>{{ event.course_name }}</strong><br>
+                    Time: {{ event.time }}<br>
+                    <span class="ht-status">{{ event.status }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p>No events for this day.</p>
+            {% endif %}
+          </div>
+        {% endfor %}
       {% endif %}
-      <p class="lead">
-        This is the central hub for managing your information, course schedules,
-        and more.
-      </p>
     </div>
-    <div class="col-md-4">
-      <div class="card bg-light">
-        <div class="card-body">
-          <h5 class="card-title">Account Summary</h5>
-          <p class="card-text">Registration Date: {{ user.date_joined }}</p>
-          <p class="card-text">Email: {{ user.email }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="row mt-4">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Unread Notifications</h5>
-          <p class="card-text">
-            You have <span id="unreadNotificationsCount">{{ unread_notifications_count }}</span> unread notifications.
-          </p>
-          <button
-            class="btn btn-sm btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#notificationsModal"
-            onclick="loadNotifications()"
-          >
-            View Notifications
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Courses Enrolled</h5>
-          <p class="card-text">
-            You are currently enrolled in {{ course_count }} courses.
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Upcoming Course</h5>
-          <p class="card-text">Next Class: {{ next_course_datetime }}</p>
-          <p class="card-text">Course Topic: {{ next_course_name }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">My Bookings</div>
-        <div class="card-body">
-          {% if user.student.enrollments.exists %}
-          <ul class="list-group">
+    <!-- Booking and Invoice Sections -->
+    {% if user.student %}
+  <!-- Student's Bookings -->
+  <h2 class="mt-4">My Bookings</h2>
+  <div class="table-responsive">
+    <div class="card">
+      <table id="posts" class="table table-striped">
+        {% if user.student.enrollments.exists %}
+          <thead>
+            <tr>
+              <th style="width:25%">Course Name</th>
+              <th style="width:25%">Day</th>
+              <th style="width:15%">Time</th>
+              <th style="width:15%">Tutor</th>
+            </tr>
+          </thead>
+          <tbody>
             {% for enrollment in user.student.enrollments.all %}
-            <li class="list-group-item">
-              <p>
-                <strong>Course:</strong> {{ enrollment.course.course_type.name }}
-              </p>
-              <p><strong>Day:</strong> {{ enrollment.course.day_of_week }}</p>
-              <p><strong>Time:</strong> {{ enrollment.course.time_slot }}</p>
-              <p>
-                <strong>Tutor:</strong> {{ enrollment.course.tutor.user.full_name }}
-              </p>
-            </li>
+              <tr>
+                <td>{{ enrollment.course.course_type.name }}</td>
+                <td>{{ enrollment.course.day_of_week }}</td>
+                <td>{{ enrollment.course.time_slot }}</td>
+                <td>{{ enrollment.course.tutor.user.full_name }}</td>
+              </tr>
             {% endfor %}
-          </ul>
-          {% else %}
+          </tbody>
+        {% else %}
           <p class="text-muted">
             You have no bookings yet.
-            <a href="{% url 'tutorials:course_booking' %}">Book a course</a>
-            now!
+            <a href="{% url 'tutorials:course_booking' %}">Book a course</a> now!
           </p>
-          {% endif %}
-        </div>
-      </div>
+        {% endif %}
+      </table>
     </div>
   </div>
+{% elif user.tutor %}
+  <!-- Tutor's Bookings -->
+<h2 class="mt-4">Student Bookings</h2>
+<div class="table-responsive">
+  <div class="card">
+    <table id="posts" class="table table-striped">
+      {% if events_by_day %}
+        <thead>
+          <tr>
+            <th>Event Date</th>
+            <th>Course Name</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in events_by_day %}
+            {% if day.events %}
+            <tr>
+              <td>{{ day.day|date:"F j, Y" }}</td>
+              {% for event in day.events %}
+              <td>{{ event.course_name }}</td>
+              <td>{{ event.time }}</td>
+              <td>{{ event.student_name }}</td>
+             
+                  
+                
 
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">Invoice Information</div>
-        <div class="card-body">
+                {% endfor %}
+              </td>
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      {% else %}
+        <p class="text-muted">You don't have any student bookings yet.</p>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% else %}
+  <p class="text-muted">
+    You don't have a student or tutor profile yet. Please create one to proceed.
+  </p>
+{% endif %}
+
+
+    <!-- Invoice Section -->
+    <h2 class="mt-4">My Invoices</h2>
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <div class="card">
           {% if invoices|length > 0 %}
-          <ul class="list-group">
-            {% for invoice in invoices %}
-            <li class="list-group-item">
-              <p><strong>Invoice ID:</strong> {{ invoice.id }}</p>
-              <p><strong>Course Name:</strong> {{ invoice.course.name }}</p>
-              <p><strong>Amount:</strong> {{ invoice.amount }}</p>
-              <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
-              <p>
-                <strong>Payment Status:</strong> {{ invoice.payment_status }}
-              </p>
-            </li>
-            {% endfor %}
-          </ul>
+            <table id="posts" class="table table-striped">
+              <thead>
+                <tr>
+                  <th style="width:10%">Invoice ID</th>
+                  <th style="width:30%">Course</th>
+                  <th style="width:20%">Amount</th>
+                  <th style="width:20%">Due Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for invoice in invoices %}
+                  <tr>
+                    <td>{{ invoice.id }}</td>
+                    <td>{{ invoice.course.name }}</td>
+                    <td>{{ invoice.amount }}</td>
+                    <td>{{ invoice.due_date }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           {% else %}
-          <p class="card-text">You currently have no pending invoices.</p>
+            <p class="text-muted">You currently have no pending invoices.</p>
           {% endif %}
         </div>
       </div>
     </div>
+
   </div>
 
-  <div class="row mt-4">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">System Announcements</div>
-        <div class="card-body">
-          <p class="card-text">
-            This section includes important system announcements, such as
-            maintenance schedules and new feature updates.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <style>
+    .card, .table {
+      overflow-y: hidden;
+    }
+  </style>
 
-  <!-- Notifications Modal -->
-  <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Message</th>
-                <th>Created At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="notificationsTableBody">
-              <!-- Notifications will be dynamically loaded here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 
   <!-- JavaScript to handle notifications -->
   <script>
