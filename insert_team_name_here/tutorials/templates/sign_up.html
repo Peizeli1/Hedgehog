@@ -1,9 +1,12 @@
 {% extends 'base_content.html' %}
 
 {% block body %}
-<div class="center-container">
-  <div class="signup-card">
-    <h1 class="text-center mb-4">Sign Up</h1>
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="home-wrapper">
+        <div class="signup-card">
+          <h1>Sign Up</h1>
     <p class="text-center text-muted">Already a member? <a href="{% url 'tutorials:log_in' %}">Log in here</a>.</p>
     <form action="{% url 'tutorials:sign_up' %}" method="post">
       {% csrf_token %}
@@ -29,6 +32,9 @@
       
       <button type="submit" class="btn btn-primary w-100">Sign Up</button>
     </form>
+    </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}
