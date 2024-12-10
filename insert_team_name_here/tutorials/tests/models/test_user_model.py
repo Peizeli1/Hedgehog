@@ -1,10 +1,9 @@
-"""Unit tests for the User model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from tutorials.models import User
 
+
 class UserModelTestCase(TestCase):
-    """Unit tests for the User model."""
 
     fixtures = [
         'tutorials/tests/fixtures/default_user.json',
@@ -19,6 +18,7 @@ class UserModelTestCase(TestCase):
     def test_valid_user(self):
         self._assert_user_is_valid()
 
+    # Username tests
     def test_username_cannot_be_blank(self):
         self.user.username = ''
         self._assert_user_is_invalid()
@@ -56,7 +56,7 @@ class UserModelTestCase(TestCase):
         self.user.username = '@@johndoe'
         self._assert_user_is_invalid()
 
-
+    # First name tests
     def test_first_name_must_not_be_blank(self):
         self.user.first_name = ''
         self._assert_user_is_invalid()
@@ -74,7 +74,7 @@ class UserModelTestCase(TestCase):
         self.user.first_name = 'x' * 51
         self._assert_user_is_invalid()
 
-
+    # Last name tests
     def test_last_name_must_not_be_blank(self):
         self.user.last_name = ''
         self._assert_user_is_invalid()
@@ -92,7 +92,7 @@ class UserModelTestCase(TestCase):
         self.user.last_name = 'x' * 51
         self._assert_user_is_invalid()
 
-
+    # Email tests
     def test_email_must_not_be_blank(self):
         self.user.email = ''
         self._assert_user_is_invalid()
@@ -122,12 +122,29 @@ class UserModelTestCase(TestCase):
         self.user.email = 'johndoe@@example.org'
         self._assert_user_is_invalid()
 
+    # Role tests
+    def test_role_must_be_valid(self):
+        self.user.role = 'invalid_role'
+        self._assert_user_is_invalid()
 
+    def test_role_may_be_student(self):
+        self.user.role = 'student'
+        self._assert_user_is_valid()
+
+    def test_role_may_be_tutor(self):
+        self.user.role = 'tutor'
+        self._assert_user_is_valid()
+
+    def test_role_may_be_admin(self):
+        self.user.role = 'admin'
+        self._assert_user_is_valid()
+
+    # Full name tests
     def test_full_name_must_be_correct(self):
         full_name = self.user.full_name()
         self.assertEqual(full_name, "John Doe")
 
-
+    # Gravatar tests
     def test_default_gravatar(self):
         actual_gravatar_url = self.user.gravatar()
         expected_gravatar_url = self._gravatar_url(size=120)
@@ -143,15 +160,18 @@ class UserModelTestCase(TestCase):
         expected_gravatar_url = self._gravatar_url(size=60)
         self.assertEqual(actual_gravatar_url, expected_gravatar_url)
 
+    # String representation
+    def test_string_representation(self):
+        self.assertEqual(str(self.user), "John Doe (@johndoe) - Student")
+
     def _gravatar_url(self, size):
         gravatar_url = f"{UserModelTestCase.GRAVATAR_URL}?size={size}&default=mp"
         return gravatar_url
 
-
     def _assert_user_is_valid(self):
         try:
             self.user.full_clean()
-        except (ValidationError):
+        except ValidationError:
             self.fail('Test user should be valid')
 
     def _assert_user_is_invalid(self):
