@@ -5,7 +5,8 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.core.exceptions import ImproperlyConfigured
-import datetime
+from datetime import datetime, date, time, timedelta
+from calendar import monthrange
 from .models import Course, Invoice, Notification, Tutor, Student, User, CourseEnrollment
 from .forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -79,13 +80,13 @@ class HomeView(View):
     def get(self, request):
         """Handle GET requests."""
         if request.user.is_authenticated:
-            return redirect('tutorials:')
+            return redirect('tutorials:dashboard')
         return render(request, 'home.html')
 
 
 # class LogInView(LoginProhibitedMixin, View):
 #     """Display login screen and handle user login."""
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:')
+#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
 
 #     def get(self, request):
 #         """Display log in template."""
@@ -105,7 +106,7 @@ class HomeView(View):
 
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
-    redirect_when_logged_in_url = reverse_lazy('tutorials:')
+    redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
 
     def get(self, request):
         """Render the login template with the form."""
@@ -139,7 +140,7 @@ class LogOutView(View):
 #     """Display password change screen and handle password change requests."""
 #     template_name = 'password.html'
 #     form_class = PasswordForm
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:')
+#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
 
 #     def get_form_kwargs(self, **kwargs):
 #         """Pass the current user to the password change form."""
@@ -390,7 +391,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             return super().dispatch(request, *args, **kwargs)
         return redirect('tutorials:log_in')
 
-
 class StudentListView(LoginRequiredMixin, RoleRequiredMixin, ListView):
     """List all students."""
     model = Student
@@ -410,7 +410,7 @@ class TutorListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related('user').prefetch_related('advanced_courses').order_by('user__last_name')
-        print("Debug: Queryset contains the following tutors:", queryset)  # Debugging output
+        print("Debug: Queryset contains the following tutors:", queryset)  
         return queryset
 
 
@@ -482,9 +482,9 @@ class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         """Handle AJAX GET requests for modal content."""
         context = self.get_context_data(**kwargs)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # Check for AJAX
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest': 
             html = render_to_string(self.template_name, context, request=request)
-            return HttpResponse(html)  # Return raw HTML for the modal
+            return HttpResponse(html)
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -504,7 +504,6 @@ class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
             CourseEnrollment.objects.create(student=student, course=course, status='Active')
             messages.success(request, 'Course booked successfully!')
 
-        # Redirect to the dashboard regardless of outcome
         return redirect('tutorials:dashboard')
     
 
@@ -533,7 +532,7 @@ class NotificationsView(LoginRequiredMixin, View):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             notification_id = request.POST.get('notification_id')
             notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-            notification.mark_as_read()  # Mark notification as read
+            notification.mark_as_read() 
             unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
             return JsonResponse({'success': True, 'unread_count': unread_count})
         return JsonResponse({'error': 'Invalid request'}, status=400)
