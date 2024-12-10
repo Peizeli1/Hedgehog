@@ -79,13 +79,13 @@ class HomeView(View):
     def get(self, request):
         """Handle GET requests."""
         if request.user.is_authenticated:
-            return redirect('tutorials:dashboard')
+            return redirect('tutorials:')
         return render(request, 'home.html')
 
 
 # class LogInView(LoginProhibitedMixin, View):
 #     """Display login screen and handle user login."""
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
+#     redirect_when_logged_in_url = reverse_lazy('tutorials:')
 
 #     def get(self, request):
 #         """Display log in template."""
@@ -105,7 +105,7 @@ class HomeView(View):
 
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
-    redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
+    redirect_when_logged_in_url = reverse_lazy('tutorials:')
 
     def get(self, request):
         """Render the login template with the form."""
@@ -139,7 +139,7 @@ class LogOutView(View):
 #     """Display password change screen and handle password change requests."""
 #     template_name = 'password.html'
 #     form_class = PasswordForm
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
+#     redirect_when_logged_in_url = reverse_lazy('tutorials:')
 
 #     def get_form_kwargs(self, **kwargs):
 #         """Pass the current user to the password change form."""
@@ -250,21 +250,22 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         """Generate the context data for rendering the template."""
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        now = datetime.now()
+        year, month = now.year, now.month
 
         if user.role == 'student':
-            # Get the student object linked to the logged-in user
             student = get_object_or_404(Student, user=user)
 
-            # Query for available courses
             available_courses = Course.objects.filter(
-                tutor__is_available=True,  # Tutors must be available
-                course_type__skill_level=student.programming_level  # Match student's level
-            ).exclude(enrollments__student=student)  # Exclude courses the student is already enrolled in
+                tutor__is_available=True,
+                course_type__skill_level=student.programming_level
+            ).exclude(enrollments__student=student)
 
-            # Other data for the dashboard
             unread_notifications_count = user.notifications.filter(is_read=False).count()
             course_count = CourseEnrollment.objects.filter(student=student).count()
             next_course = CourseEnrollment.objects.filter(student=student).order_by('course__time_slot').first()
+
+            events_by_day, today = self.generate_calendar_events(student, year, month)
 
             context.update({
                 'unread_notifications_count': unread_notifications_count,
@@ -273,22 +274,119 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'next_course_name': next_course.course.course_type.name if next_course else None,
                 'available_courses': available_courses,
                 'invoices': student.invoice_set.all(),
+                'events_by_day': events_by_day,
+                'today': today,
             })
 
         elif user.role == 'tutor':
             tutor = get_object_or_404(Tutor, user=user)
+
             courses = Course.objects.filter(tutor=tutor)
-            context.update({'courses': courses})
+
+            events_by_day, today = self.generate_calendar_events_for_tutor(tutor, year, month)
+
+            context.update({
+                'courses': courses,
+                'events_by_day': events_by_day,
+                'today': today,
+            })
 
         elif user.role == 'admin':
-            pass  # No additional data for admin
+            pass
 
         return context
 
+    def generate_calendar_events(self, student, year, month):
+        """Generate calendar events for the student."""
+        return self._generate_calendar_events_for_user(student.user, year, month)
+
+    def generate_calendar_events_for_tutor(self, tutor, year, month):
+        """Generate calendar events for the tutor."""
+        return self._generate_calendar_events_for_user(tutor.user, year, month)
+
+    def _generate_calendar_events_for_user(self, user, year, month):
+        """Helper function to generate calendar events for a user (student or tutor)."""
+        days_in_month = monthrange(year, month)[1]
+        today = date.today()
+
+        events_by_day = {}
+
+        if user.role == 'student':
+            enrollments = CourseEnrollment.objects.filter(student__user=user)
+            for enrollment in enrollments:
+                course = enrollment.course
+                course_date = self.get_course_date_for_month(course, year, month, today)
+
+                if course_date and course_date.month == month and course_date.year == year and course_date >= today:
+                    if course_date not in events_by_day:
+                        events_by_day[course_date] = []
+
+                    events_by_day[course_date].append(
+                        {
+                            "course_name": course.course_type.name,
+                            "time": course.time_slot.strftime("%H:%M %p"),
+                            "status": self.get_event_status(course_date),
+                        }
+                    )
+        elif user.role == 'tutor':
+            courses = Course.objects.filter(tutor__user=user)
+            for course in courses:
+                course_date = self.get_course_date_for_month(course, year, month, today)
+
+                if course_date and course_date.month == month and course_date.year == year and course_date >= today:
+                    if course_date not in events_by_day:
+                        events_by_day[course_date] = []
+
+                    events_by_day[course_date].append(
+                        {
+                            "course_name": course.course_type.name,
+                            "time": course.time_slot.strftime("%H:%M %p"),
+                            "status": self.get_event_status(course_date),
+                        }
+                    )
+        calendar_days = []
+        for day in range(1, days_in_month + 1):
+            day_date = date(year, month, day)
+            day_events = events_by_day.get(day_date, [])
+            calendar_days.append({"day": day_date, "events": day_events})
+
+        return calendar_days, today
+
+    def get_course_date_for_month(self, course, year, month, today):
+        """Calculate the actual date for the course based on its day_of_week."""
+        days_of_week = {
+            'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+            'Friday': 4, 'Saturday': 5, 'Sunday': 6
+        }
+
+        first_day_of_month = date(year, month, 1)
+        target_weekday = days_of_week.get(course.day_of_week, None)
+
+        if target_weekday is None:
+            return None 
+    
+        day_difference = (target_weekday - first_day_of_month.weekday()) % 7
+        course_date = first_day_of_month + timedelta(days=day_difference)
+
+
+        while course_date < today:
+            course_date += timedelta(weeks=1)
+
+        if course_date.month == month and course_date.year == year:
+            return course_date
+
+        return None
+
+    def get_event_status(self, event_date):
+        """Determine the status of an event based on its date."""
+        today = date.today()
+        if event_date > today:
+            return "Upcoming"
+        return "Completed"
+
     def dispatch(self, request, *args, **kwargs):
         """Redirect non-authenticated users to the login page."""
-        user = request.user
-        if user.is_authenticated:
+        if request.user.is_authenticated:
             return super().dispatch(request, *args, **kwargs)
         return redirect('tutorials:log_in')
 
