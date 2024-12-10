@@ -1,35 +1,30 @@
-{% extends 'base_content.html' %} 
-{% load static %} 
+{% extends 'base.html' %}
 {% block body %}
 <div class="home-wrapper">
-  <div
-    class="container vh-100 d-flex flex-column justify-content-center align-items-center text-center"
-  >
-    <div class="card cover-card shadow p-4">
-      <img
-        src="{% static 'hedgehog.png' %}"
-        alt="Hedgehog Logo"
-        class="logo mb-3"
-      />
-      <h1 class="cover-heading">Welcome to Hedgehog Tutoring</h1>
-      <p class="tagline text-muted">
-        Unlock Your Potential, One Lesson at a Time!
-      </p>
+  <div class="container">
+    <div class="row w-100">
+      <div class="col-12 text-center">
+        <div class="homecard cover-card mx-auto">
+          <img src="static/hedgehog_3.png" class="logo">
+          <h1 class="cover-heading">Welcome to Hedgehog Tutoring</h1>
 
-      <div class="mt-4">
-        <a
-          href="{% url 'tutorials:sign_up' %}"
-          class="btn btn-primary btn-lg me-2"
-          >Sign Up</a
-        >
-        <a href="{% url 'tutorials:log_in' %}" class="btn btn-secondary btn-lg"
-          >Log In</a
-        >
+          <p class="tagline">Unlock Your Potential, One Lesson at a Time!</p>
+
+          <p>
+            <a href='{% url 'tutorials:sign_up' %}' class="btn btn-lg btn-secondary">
+              Sign up
+            </a>
+          </p>
+          <p>
+            <a href='{% url 'tutorials:log_in' %}' class="btn btn-lg btn-secondary">
+              Log in
+            </a>
+          </p>
+
+          <p class="cover-text">A task manager application by Team <i>Hedgehog</i></p>
+        </div>
       </div>
     </div>
-    <p class="mt-4 text-muted small">
-      A task manager application by Team <i>Hedgehog</i>
-    </p>
   </div>
 </div>
 {% endblock %}
