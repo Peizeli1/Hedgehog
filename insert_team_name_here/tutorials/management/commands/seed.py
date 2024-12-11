@@ -5,6 +5,7 @@ from tutorials.models import User, Student, Tutor, CourseType, Course, Invoice, 
 from faker import Faker
 import random
 from datetime import timedelta, datetime
+from django.contrib.auth.hashers import make_password
 
 fake = Faker()
 
@@ -139,7 +140,7 @@ class Command(BaseCommand):
                         username=username,
                         email=email,
                         defaults={
-                            "password": self.DEFAULT_PASSWORD,
+                            "password": make_password(self.DEFAULT_PASSWORD),
                             "first_name": first_name,
                             "last_name": last_name,
                             "role": "tutor",
@@ -194,7 +195,7 @@ class Command(BaseCommand):
                         username=username,
                         email=email,
                         defaults={
-                            "password": self.DEFAULT_PASSWORD,
+                            "password": make_password(self.DEFAULT_PASSWORD),
                             "first_name": first_name,
                             "last_name": last_name,
                             "role": "student",
@@ -305,19 +306,6 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error enrolling student: {e}"))
 
-    # def create_invoices(self, students):
-    #     """Generate invoices for students."""
-    #     for student in students:
-    #         try:
-    #             Invoice.objects.create(
-    #                 student=student,
-    #                 amount=round(random.uniform(50, 200), 2),
-    #                 status=random.choice(['Paid', 'Unpaid']),
-    #                 due_date=datetime.now() + timedelta(days=random.randint(10, 30)),
-    #             )
-    #             self.stdout.write(self.style.SUCCESS(f'Invoice created for: {student.user.username}'))
-    #         except Exception as e:
-    #             self.stdout.write(self.style.ERROR(f"Error creating invoice: {e}"))
     
     def create_invoices(self, students):
         """Generate invoices for students."""
