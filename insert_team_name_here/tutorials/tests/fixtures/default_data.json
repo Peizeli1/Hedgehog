@@ -1,0 +1,91 @@
+[
+    {
+        "model": "tutorials.coursetype",
+        "pk": 1,
+        "fields": {
+            "name": "Python Basics",
+            "description": "Introduction to Python programming",
+            "skill_level": "Beginner"
+        }
+    },
+    {
+        "model": "tutorials.coursetype",
+        "pk": 2,
+        "fields": {
+            "name": "Advanced Python",
+            "description": "Advanced topics in Python programming",
+            "skill_level": "Advanced"
+        }
+    },
+    {
+        "model": "tutorials.tutor",
+        "pk": 1,
+        "fields": {
+            "user": 2,  
+            "expertise": "Python",
+            "is_available": true
+        }
+    },
+    {
+        "model": "tutorials.student",
+        "pk": 1,
+        "fields": {
+            "user": 3, 
+            "phone": "1234567890",
+            "programming_level": "Beginner"
+        }
+    },
+    {
+        "model": "tutorials.student",
+        "pk": 2,
+        "fields": {
+            "user": 9,  
+            "phone": "0987654321",
+            "programming_level": "Advanced"
+        }
+    },
+    {
+        "model": "tutorials.course",
+        "pk": 1,
+        "fields": {
+            "course_type": 1,
+            "tutor": 1,
+            "day_of_week": "Monday",
+            "time_slot": "10:00:00",
+            "duration": 60,
+            "location": "Room 101",
+            "status": "Scheduled"
+        }
+    },
+    {
+        "model": "tutorials.booking",
+        "pk": 1,
+        "fields": {
+            "student": 1,
+            "course": 1,
+            "booking_date": "2024-12-01T10:00:00Z"
+        }
+    },
+    {
+        "model": "tutorials.courseenrollment",
+        "pk": 1,
+        "fields": {
+            "student": 1,
+            "course": 1,
+            "status": "Active",
+            "enrollment_date": "2024-12-01T10:00:00Z"
+        }
+    },
+    {
+        "model": "tutorials.invoice",
+        "pk": 1,
+        "fields": {
+            "student": 1,
+            "course": 1,
+            "amount": 100.00,
+            "status": "Unpaid",
+            "due_date": "2024-12-31",
+            "created_at": "2024-12-02T10:00:00Z"
+        }
+    }
+]
