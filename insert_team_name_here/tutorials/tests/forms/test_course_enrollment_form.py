@@ -5,11 +5,11 @@ from tutorials.models import Student, Course
 class CourseEnrollmentFormTestCase(TestCase):
     """Unit tests for the CourseEnrollmentForm."""
 
-    fixtures = ['tutorials/tests/fixtures/default_data.json']  # Update with appropriate fixtures
+    fixtures = ['default_user.json', 'other_users.json', 'default_data.json']
 
     def setUp(self):
-        self.student = Student.objects.get(username='@student1')
-        self.course = Course.objects.get(name='Sample Course')
+        self.student = Student.objects.get(user__username='@janedoe')
+        self.course = Course.objects.get(course_type__name='Python Basics')
         self.form_input = {
             'student': self.student.id,
             'course': self.course.id,

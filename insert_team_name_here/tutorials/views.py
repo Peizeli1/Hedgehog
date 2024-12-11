@@ -30,28 +30,6 @@ class RoleRequiredMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-# Mixin for Login-Prohibited Views
-# class LoginProhibitedMixin:
-#     """Mixin that redirects authenticated users from views intended for unauthenticated users."""
-#     redirect_when_logged_in_url = None
-
-#     def dispatch(self, request, *args, **kwargs):
-#         if request.user.is_authenticated:
-#             return self.handle_already_logged_in(request, *args, **kwargs)
-#         return super().dispatch(request, *args, **kwargs)
-
-#     def handle_already_logged_in(self, request, *args, **kwargs):
-#         """Redirect authenticated users to the specified URL."""
-#         return redirect(self.get_redirect_when_logged_in_url())
-
-#     def get_redirect_when_logged_in_url(self):
-#         """Return the URL to redirect authenticated users."""
-#         if self.redirect_when_logged_in_url is None:
-#             raise ImproperlyConfigured(
-#                 f"{self.__class__.__name__} requires a value for 'redirect_when_logged_in_url'."
-#             )
-#         return self.redirect_when_logged_in_url
-
 class LoginProhibitedMixin:
     """Mixin that redirects authenticated users from views intended for unauthenticated users."""
     redirect_when_logged_in_url = None
@@ -84,26 +62,6 @@ class HomeView(View):
         return render(request, 'home.html')
 
 
-# class LogInView(LoginProhibitedMixin, View):
-#     """Display login screen and handle user login."""
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
-
-#     def get(self, request):
-#         """Display log in template."""
-#         form = LogInForm()
-#         return render(request, 'log_in.html', {'form': form, 'next': request.GET.get('next', '')})
-
-#     def post(self, request):
-#         """Handle login attempts."""
-#         form = LogInForm(request.POST)
-#         if form.is_valid():
-#             user = form.get_user()
-#             if user:
-#                 login(request, user)
-#                 return redirect(request.POST.get('next', self.redirect_when_logged_in_url))
-#             messages.error(request, "Invalid username or password.")
-#         return render(request, 'log_in.html', {'form': form})
-
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
@@ -134,51 +92,6 @@ class LogOutView(View):
         """Handle GET requests to log out the current user."""
         logout(request)
         return redirect('tutorials:home')
-
-
-# class PasswordView(LoginProhibitedMixin, FormView):
-#     """Display password change screen and handle password change requests."""
-#     template_name = 'password.html'
-#     form_class = PasswordForm
-#     redirect_when_logged_in_url = reverse_lazy('tutorials:dashboard')
-
-#     def get_form_kwargs(self, **kwargs):
-#         """Pass the current user to the password change form."""
-#         kwargs = super().get_form_kwargs(**kwargs)
-#         kwargs.update({'user': self.request.user})
-#         return kwargs
-
-#     def form_valid(self, form):
-#         """Handle valid form by saving the new password."""
-#         form.save()
-#         login(self.request, self.request.user)
-#         messages.success(self.request, "Password updated successfully!")
-#         return super().form_valid(form)
-
-#     def get_success_url(self):
-#         """Redirect the user after a successful password change."""
-#         return reverse_lazy('tutorials:dashboard')
-
-# class PasswordView(FormView):
-#     """Display password change screen and handle password change requests."""
-#     template_name = 'password.html'
-#     form_class = PasswordForm
-
-#     def get_form_kwargs(self, **kwargs):
-#         """Pass the current user to the password change form."""
-#         kwargs = super().get_form_kwargs(**kwargs)
-#         kwargs.update({'user': self.request.user})
-#         return kwargs
-
-#     def form_valid(self, form):
-#         """Handle valid form by saving the new password."""
-#         form.save()
-#         messages.success(self.request, "Password updated successfully!")
-#         return super().form_valid(form)
-
-#     def get_success_url(self):
-#         """Redirect the user after a successful password change."""
-#         return reverse_lazy('tutorials:dashboard')
 
 
 class PasswordView(FormView):
@@ -246,38 +159,42 @@ class SignUpView(LoginProhibitedMixin, View):
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Display the user's dashboard."""
     template_name = "dashboard.html"
-
+    
     def get_context_data(self, **kwargs):
-        """Generate the context data for rendering the template."""
+        """Provide context for the dashboard."""
         context = super().get_context_data(**kwargs)
         user = self.request.user
         now = datetime.now()
         year, month = now.year, now.month
 
-        if user.role == 'student':
-            student = get_object_or_404(Student, user=user)
+        # Fetch unread notifications count
+        context['unread_notifications_count'] = Notification.objects.filter(user=user, is_read=False).count()
+        
+        context['month'] = now.strftime('%B')
+        context['year'] = year
 
+        # Fetch courses enrolled and upcoming course details
+        if user.role == 'student':
+            student = user.student
+            
             available_courses = Course.objects.filter(
                 tutor__is_available=True,
                 course_type__skill_level=student.programming_level
             ).exclude(enrollments__student=student)
-
-            unread_notifications_count = user.notifications.filter(is_read=False).count()
-            course_count = CourseEnrollment.objects.filter(student=student).count()
-            next_course = CourseEnrollment.objects.filter(student=student).order_by('course__time_slot').first()
-
+            context['available_courses'] = available_courses
+            
+            context['course_count'] = CourseEnrollment.objects.filter(student=student).count()
+            next_course = CourseEnrollment.objects.filter(student=student, status='Active').order_by('course__time_slot').first()
+            
             events_by_day, today = self.generate_calendar_events(student, year, month)
+            context['events_by_day'] = events_by_day
+            context['today'] = today
+            
+            context['next_course_datetime'] = next_course.course.time_slot if next_course else "No upcoming courses"
+            context['next_course_name'] = next_course.course.course_type.name if next_course else "N/A"
 
-            context.update({
-                'unread_notifications_count': unread_notifications_count,
-                'course_count': course_count,
-                'next_course_datetime': next_course.course.time_slot if next_course else None,
-                'next_course_name': next_course.course.course_type.name if next_course else None,
-                'available_courses': available_courses,
-                'invoices': student.invoice_set.all(),
-                'events_by_day': events_by_day,
-                'today': today,
-            })
+            # # Fetch unpaid invoices
+            context['invoices'] = Invoice.objects.filter(student=student, status='Unpaid').order_by('due_date')
 
         elif user.role == 'tutor':
             tutor = get_object_or_404(Tutor, user=user)
@@ -290,12 +207,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'courses': courses,
                 'events_by_day': events_by_day,
                 'today': today,
+                'next_course_datetime': 'N/A',
+                'next_course_name': 'N/A',
+                'invoices': []
             })
-
+        
         elif user.role == 'admin':
             pass
 
         return context
+    
 
     def generate_calendar_events(self, student, year, month):
         """Generate calendar events for the student."""
@@ -414,9 +335,7 @@ class TutorListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-
 class CourseBookingView(LoginRequiredMixin, TemplateView):
-    print("inside course booking view.")
     """Class-based view to handle course booking."""
     template_name = 'course_booking.html'
 
@@ -436,8 +355,21 @@ class CourseBookingView(LoginRequiredMixin, TemplateView):
         if CourseEnrollment.objects.filter(student=student, course=course).exists():
             messages.error(request, "You have already booked this course.")
         else:
+            # Create the course enrollment
             CourseEnrollment.objects.create(student=student, course=course, status='Active')
+
+            # Create a notification for the student
+            notification_message = f"You have successfully booked the course '{course.course_type.name}' scheduled on {course.day_of_week} at {course.time_slot}."
+            print(notification_message)
+            Notification.objects.create(
+                user=student.user,
+                message=notification_message,
+                is_read=False,
+            )
+
+            # Success message
             messages.success(request, "Course booked successfully!")
+        
         return redirect('tutorials:dashboard')
 
 
@@ -479,14 +411,6 @@ class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
         context['course'] = course
         return context
 
-    def get(self, request, *args, **kwargs):
-        """Handle AJAX GET requests for modal content."""
-        context = self.get_context_data(**kwargs)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest': 
-            html = render_to_string(self.template_name, context, request=request)
-            return HttpResponse(html)
-        return super().get(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         """Handle the course booking confirmation."""
         course_id = kwargs.get('course_id')
@@ -501,8 +425,36 @@ class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
         if CourseEnrollment.objects.filter(student=student, course=course).exists():
             messages.error(request, 'You are already enrolled in this course.')
         else:
+            # Create course enrollment
             CourseEnrollment.objects.create(student=student, course=course, status='Active')
-            messages.success(request, 'Course booked successfully!')
+
+            # Generate an invoice
+            due_date = datetime.now() + timedelta(days=30)
+            invoice = Invoice.objects.create(
+                student=student,
+                course=course,
+                amount=course.course_type.cost,  # Assuming `cost` is a field in `CourseType`
+                status='Unpaid',
+                due_date=due_date
+            )
+
+            # Create notification for booking
+            notification_message = f"You have successfully booked the course '{course.course_type.name}' scheduled on {course.day_of_week} at {course.time_slot}."
+            Notification.objects.create(
+                user=student.user,
+                message=notification_message,
+                is_read=False,
+            )
+
+            # Create notification for the invoice
+            Notification.objects.create(
+                user=student.user,
+                message=f"Invoice for the course '{course.course_type.name}' is due on {invoice.due_date.strftime('%Y-%m-%d')}.",
+                is_read=False,
+            )
+
+            # Success message
+            messages.success(request, "Course booked successfully! An invoice has been generated.")
 
         return redirect('tutorials:dashboard')
     

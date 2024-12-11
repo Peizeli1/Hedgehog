@@ -24,6 +24,9 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             self.create_admins()
+        
+        # Create specific users
+        self.create_specific_users()
 
         course_types = self.create_course_types()  # Create course types before tutors
         tutors = self.create_tutors()             # Tutors can now use course types
@@ -75,6 +78,40 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Admin user created: {user.username}'))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error creating admin user: {e}"))
+    
+    
+    def create_specific_users(self):
+        """Create specific users for testing."""
+        specific_users = [
+            {"username": "@johndoe", "role": "admin", "first_name": "John", "last_name": "Doe"},
+            {"username": "@janedoe", "role": "tutor", "first_name": "Jane", "last_name": "Doe"},
+            {"username": "@charlie", "role": "student", "first_name": "Charlie", "last_name": ""},
+        ]
+
+        for user_data in specific_users:
+            try:
+                user, created = User.objects.get_or_create(
+                    username=user_data['username'],
+                    defaults={
+                        "first_name": user_data['first_name'],
+                        "last_name": user_data['last_name'],
+                        "email": self.create_unique_email(user_data['first_name'], user_data['last_name']),
+                        "role": user_data['role'],
+                    },
+                )
+
+                if created:
+                    user.set_password(self.DEFAULT_PASSWORD)  # Properly hash the password
+                    user.save()
+
+                if user_data['role'] == 'tutor':
+                    Tutor.objects.get_or_create(user=user)
+                elif user_data['role'] == 'student':
+                    Student.objects.get_or_create(user=user)
+
+                self.stdout.write(self.style.SUCCESS(f"Specific user created: {user.username}"))
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"Error creating specific user {user_data['username']}: {e}"))
 
 
     def create_tutors(self):
@@ -194,17 +231,18 @@ class Command(BaseCommand):
 
 
     def create_course_types(self):
-        """Create sample course types."""
+        """Create sample course types with random costs."""
         course_types = []
-        for _ in range(5):
+        for _ in range(5):  
             try:
                 course_type = CourseType.objects.create(
                     name=fake.word().capitalize(),
                     description=fake.sentence(),
                     skill_level=random.choice(['Beginner', 'Intermediate', 'Advanced']),
+                    cost=round(random.uniform(50, 200), 2),  
                 )
                 course_types.append(course_type)
-                self.stdout.write(self.style.SUCCESS(f'Course type created: {course_type.name}'))
+                self.stdout.write(self.style.SUCCESS(f'Course type created: {course_type.name} with cost ${course_type.cost}'))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error creating course type: {e}"))
         return course_types
@@ -216,7 +254,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("No tutors or course types available to create courses."))
             return courses
 
-        for _ in range(10):
+        for _ in range(10):  # You can adjust the number of courses as needed
             try:
                 tutor = random.choice(tutors)
                 course_type = random.choice(course_types)
@@ -230,7 +268,7 @@ class Command(BaseCommand):
                     status=random.choice(['Scheduled', 'Cancelled']),
                 )
                 courses.append(course)
-                self.stdout.write(self.style.SUCCESS(f'Course created: {course}'))
+                self.stdout.write(self.style.SUCCESS(f'Course created: {course.course_type.name} with cost ${course.course_type.cost}'))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error creating course: {e}"))
         return courses
@@ -267,19 +305,42 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error enrolling student: {e}"))
 
+    # def create_invoices(self, students):
+    #     """Generate invoices for students."""
+    #     for student in students:
+    #         try:
+    #             Invoice.objects.create(
+    #                 student=student,
+    #                 amount=round(random.uniform(50, 200), 2),
+    #                 status=random.choice(['Paid', 'Unpaid']),
+    #                 due_date=datetime.now() + timedelta(days=random.randint(10, 30)),
+    #             )
+    #             self.stdout.write(self.style.SUCCESS(f'Invoice created for: {student.user.username}'))
+    #         except Exception as e:
+    #             self.stdout.write(self.style.ERROR(f"Error creating invoice: {e}"))
+    
     def create_invoices(self, students):
         """Generate invoices for students."""
         for student in students:
-            try:
-                Invoice.objects.create(
-                    student=student,
-                    amount=round(random.uniform(50, 200), 2),
-                    status=random.choice(['Paid', 'Unpaid']),
-                    due_date=datetime.now() + timedelta(days=random.randint(10, 30)),
-                )
-                self.stdout.write(self.style.SUCCESS(f'Invoice created for: {student.user.username}'))
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error creating invoice: {e}"))
+            enrollments = CourseEnrollment.objects.filter(student=student, status='Active')
+            if not enrollments.exists():
+                self.stdout.write(self.style.WARNING(f"No active enrollments for student {student.user.username}. Skipping invoice generation."))
+                continue
+
+            for enrollment in enrollments:
+                try:
+                    Invoice.objects.create(
+                        student=student,
+                        course=enrollment.course,
+                        amount=enrollment.course.course_type.cost,  # Use the course type's cost
+                        status=random.choice(['Paid', 'Unpaid']),
+                        due_date=datetime.now() + timedelta(days=random.randint(10, 30)),
+                    )
+                    self.stdout.write(self.style.SUCCESS(
+                        f"Invoice created for student {student.user.username} for course {enrollment.course.course_type.name} with cost ${enrollment.course.course_type.cost}"
+                    ))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f"Error creating invoice for student {student.user.username}: {e}"))
 
     def create_unique_email(self, first_name, last_name):
         """Ensure unique email addresses."""

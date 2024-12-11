@@ -17,7 +17,6 @@ def create_user_profile(sender, instance, created, **kwargs):
             elif instance.role == 'tutor':
                 Tutor.objects.create(user=instance)
         except Exception as e:
-            # Log or print the exception for debugging
             print(f"Error creating profile for user {instance}: {e}")
 
 
@@ -32,5 +31,4 @@ def save_user_profile(sender, instance, **kwargs):
         elif instance.role == 'tutor' and hasattr(instance, 'tutor'):
             instance.tutor.save()
     except Exception as e:
-        # Log or print the exception for debugging
         print(f"Error saving profile for user {instance}: {e}")

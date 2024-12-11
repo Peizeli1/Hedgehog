@@ -6,7 +6,7 @@ from tutorials.models import User, Tutor
 class TutorListViewTestCase(TestCase):
     """Tests of the tutor list view."""
 
-    fixtures = ['tutorials/tests/fixtures/default_user.json']
+    fixtures = ['tutorials/fixtures/default_user.json']
 
     def setUp(self):
         self.admin_user = User.objects.get(username='@admin')

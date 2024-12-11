@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
 
@@ -143,3 +144,7 @@ LOGIN_URL = 'tutorials:log_in'
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+FIXTURE_DIRS = [
+    os.path.join(BASE_DIR, 'tutorials', 'tests', 'fixtures'),  # Adjust based on your project structure
+]

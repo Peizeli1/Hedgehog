@@ -6,7 +6,7 @@ from tutorials.models import User, Notification
 class NotificationsViewTestCase(TestCase):
     """Tests of the notifications view."""
 
-    fixtures = ['tutorials/tests/fixtures/default_user.json']
+    fixtures = ['tutorials/fixtures/default_user.json']
 
     def setUp(self):
         self.user = User.objects.get(username='@johndoe')

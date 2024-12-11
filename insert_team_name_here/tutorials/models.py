@@ -1,7 +1,7 @@
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils.timezone import now  # Added this line
+from django.utils.timezone import now 
 from . import utils
 
 
@@ -99,6 +99,7 @@ class CourseType(models.Model):
         default='Beginner',
         help_text="Skill level required for the course."
     )
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Add this field
 
     def __str__(self):
         return self.name
@@ -166,9 +167,11 @@ class CourseEnrollment(models.Model):
 
 class Invoice(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=50, default="Unpaid", help_text="e.g., Paid, Unpaid.")
+    status = models.CharField(max_length=50, choices=[('Paid', 'Paid'), ('Unpaid', 'Unpaid')])
     due_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Invoice {self.id}: {self.student.user.full_name()} - Amount: {self.amount}, Due: {self.due_date}, Status: {self.status}"
