@@ -1,7 +1,8 @@
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 from django.db import models
-from django.utils.timezone import now 
+from django.utils.timezone import now
 from . import utils
 
 
@@ -175,3 +176,38 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"Invoice {self.id}: {self.student.user.full_name()} - Amount: {self.amount}, Due: {self.due_date}, Status: {self.status}"
+
+class StudentRequest(models.Model):
+    STATUS_CHOICES = [
+        ('unallocated', 'Unallocated'),
+        ('allocated', 'Allocated'),
+    ]
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests')
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unallocated')
+    created_at = models.DateTimeField(auto_now_add=True)
+    allocated_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='allocated_requests'
+    )
+    admin_reply = models.TextField(blank=True, null=True, help_text="Reply provided by the admin.")  
+    replied_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='replies',
+        help_text="Admin who provided the reply."
+    )
+
+    def __str__(self):
+        return f"Request by {self.student.username} - {self.status}"
+    
+class RequestReply(models.Model):
+    student_request = models.ForeignKey(
+        StudentRequest, on_delete=models.CASCADE, related_name='replies'
+    )
+    replied_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'admin'}
+    )
+    reply_text = models.TextField(help_text="The text of the admin's reply.")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reply by {self.replied_by.username} on Request {self.student_request.id}"

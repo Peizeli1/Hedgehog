@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Request List</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'custom.css' %}">
+</head>
+<body>
+    <div class="dash-card">
+        <h1 class="text-center">
+            {% if user.role == "admin" %}
+                All Student Requests
+            {% else %}
+                My Requests
+            {% endif %}
+        </h1>
+
+        {% if user.role == 'student' %}
+        <div style="margin-bottom: 20px; text-align: center;">
+            <form method="get" action="{% url 'tutorials:create_request' %}" style="display:inline;">
+                <button type="submit" class="btn btn-success">Create Request</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <table id="posts">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Allocated To</th>
+                    <th>Reply</th>
+                    {% if user.role == "admin" %}
+                        <th>Actions</th>
+                    {% endif %}
+                </tr>                
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>{{ request.student.username }}</td>
+                    <td>{{ request.description }}</td>
+                    <td>{{ request.get_status_display }}</td>
+                    <td>
+                        {% if request.allocated_to %}
+                            {{ request.allocated_to.username }}
+                        {% else %}
+                            Not allocated
+                        {% endif %}
+                    </td>
+                    <td>
+                        <h2>Replies</h2>
+                        <ul>
+                            {% for reply in request.replies.all %}
+                            <li>
+                                <strong>{{ reply.replied_by.get_full_name }}:</strong> {{ reply.reply_text }}
+                                <br><small>Replied on {{ reply.created_at|date:"Y-m-d H:i" }}</small>
+                            </li>
+                            {% empty %}
+                            <li>No replies yet.</li>
+                            {% endfor %}
+                        </ul>
+                    </td>                    
+                    {% if user.role == "admin" %}
+                    <td>
+                        <form method="get" action="{% url 'tutorials:update_request_status' request.id %}" style="display:inline;">
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'tutorials:dashboard' %}" class="btn btn-secondary" type="button">Back to Dashboard</a>
+        </div>
+    </div>    
+</body>
+</html>

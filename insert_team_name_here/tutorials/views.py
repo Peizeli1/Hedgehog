@@ -3,12 +3,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, View, FormView, UpdateView, TemplateView
 from django.contrib.auth import login, logout
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.core.exceptions import ImproperlyConfigured
 from datetime import datetime, date, time, timedelta
 from calendar import monthrange
-from .models import Course, Invoice, Notification, Tutor, Student, User, CourseEnrollment
-from .forms import LogInForm, PasswordForm, UserForm, SignUpForm
+from .models import Course, Invoice, Notification, Tutor, Student, User, CourseEnrollment, StudentRequest, RequestReply
+from .forms import LogInForm, PasswordForm, UserForm, SignUpForm, StudentRequestForm, UpdateRequestForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.template.loader import render_to_string
 
@@ -527,3 +528,67 @@ class NotificationsView(LoginRequiredMixin, View):
             unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
             return JsonResponse({'success': True, 'unread_count': unread_count})
         return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+
+@login_required
+def request_list(request):
+    if request.user.role == 'student':
+        requests = StudentRequest.objects.filter(student=request.user).prefetch_related('replies__replied_by')
+    elif request.user.role == 'admin':
+        requests = StudentRequest.objects.all().prefetch_related('replies__replied_by')
+    else:
+        return redirect('tutorials:dashboard')
+    return render(request, 'requests/request_list.html', {'requests': requests, 'user': request.user})
+
+    
+
+@login_required
+def create_request(request):
+    if request.method == 'POST':
+        form = StudentRequestForm(request.POST)
+        if form.is_valid():
+            student_request = form.save(commit=False)
+            student_request.student = request.user
+            student_request.status = 'unallocated'
+            student_request.save()
+            messages.success(request, "Request successfully created!")
+            return redirect('tutorials:request_list')
+    else:
+        form = StudentRequestForm()
+
+    return render(request, 'requests/create_request.html', {'form': form})
+
+@login_required
+def update_request_status(request, request_id):
+    student_request = get_object_or_404(StudentRequest, id=request_id)
+    if request.user.role != 'admin':
+        return redirect('tutorials:dashboard')
+    
+    if request.method == 'POST':
+        form = UpdateRequestForm(request.POST)
+        if form.is_valid():
+            reply_text = form.cleaned_data.get('admin_reply')
+            if reply_text: 
+                RequestReply.objects.create(
+                    student_request=student_request,
+                    replied_by=request.user,
+                    reply_text=reply_text,
+                )
+            
+            student_request.status = form.cleaned_data.get('status')
+            student_request.allocated_to = form.cleaned_data.get('allocated_to')
+            student_request.save()
+
+            messages.success(request, "Request updated successfully!")
+            return redirect('tutorials:request_list')
+    else:
+        form = UpdateRequestForm(instance=student_request)
+
+    replies = student_request.replies.all() 
+
+    return render(request, 'requests/update_status.html', {
+        'form': form,
+        'student_request': student_request,
+        'replies': replies, 
+    })

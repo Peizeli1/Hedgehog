@@ -18,14 +18,14 @@
     </p>
 
     <!-- User Account Information -->
-    <div class="summary-cards d-flex justify-content-between">
-      <div class="card flex-item rounded p-3 shadow-sm">
+    <div class="summary-cards d-flex justify-content-between {% if user.role == 'tutor' %}three-columns{% else %}four-columns{% endif %}">
+      <div class="card flex-item rounded p-4 shadow-sm">
         <h6>Account Summary</h6>
         <p>Registration Date: {{ user.date_joined }}</p>
         <p>Email: {{ user.email }}</p>
       </div>
-      
-      <div class="card flex-item rounded p-3 shadow-sm">
+    
+      <div class="card flex-item rounded p-4 shadow-sm">
         <h6>Unread Notifications</h6>
         <p>You have <span id="unreadNotificationsCount">{{ unread_notifications_count }}</span> unread notifications.</p>
         <button
@@ -36,11 +36,16 @@
           View Notifications
         </button>
       </div>
-
-      
-      <div class="card flex-item rounded p-3 shadow-sm">
+    
+      {% if user.role == "admin" or user.role == "student" %}
+      <div class="card flex-item rounded p-4 shadow-sm">
+        <h6>Request Management</h6>
+        <a href="{% url 'tutorials:request_list' %}" class="btn btn-primary btn-lg">Manage Requests</a>
+      </div>
+      {% endif %}
+    
+      <div class="card flex-item rounded p-4 shadow-sm">
         <h6>My Courses</h6>
-        
         {% if user.role == "tutor" %}
           {% for day in events_by_day %}
             {% if day.events %}
@@ -57,9 +62,9 @@
           <p class="card-text">Next Class: {{ next_course_datetime }}</p>
           <p class="card-text">Course Topic: {{ next_course_name }}</p>
         {% endif %}
-        
       </div>
     </div>
+    
 
 
 

@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Request Status</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'custom.css' %}">
+</head>
+<body>
+    <div class="dash-card">
+        <h1 class="text-center">Update Request</h1>
+        {% if user.role != "admin" %}
+            <div class="alert alert-warning">
+                Only administrators can update request statuses.
+            </div>
+            <a href="{% url 'tutorials:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        {% else %}
+        <p><strong>Request by:</strong> {{ student_request.student.username }}</p>
+        <p><strong>Description:</strong> {{ student_request.description }}</p>
+        {% if user.role == 'admin' %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                {% comment %} <label for="allocated_to">Allocate to:</label>
+                <select name="allocated_to" id="allocated_to" class="form-control">
+                    <option value="">Not allocated</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if user == student_request.allocated_to %}selected{% endif %}>
+                        {{ user.full_name }}
+                    </option>
+                    {% endfor %}
+                </select> {% endcomment %}
+                
+                <button type="submit" class="btn btn-primary ">Update</button>
+            </form>
+        {% endif %}
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'tutorials:request_list' %}" class="btn btn-secondary">Back to Requests</a>
+        </div>
+        {% endif %}
+
+        <h2>Replies</h2>
+        <ul>
+            {% for reply in request.replies.all %}
+            <li>
+                <strong>{{ reply.replied_by.get_full_name }}:</strong> {{ reply.reply_text }}
+                <br><small>Replied on {{ reply.created_at|date:"Y-m-d H:i" }}</small>
+            </li>
+            {% empty %}
+            <li>No replies yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

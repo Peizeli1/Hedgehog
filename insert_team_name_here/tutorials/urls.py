@@ -28,4 +28,9 @@ urlpatterns = [
     path('invoice/', views.InvoiceView.as_view(), name='invoice'),
     
     path('notifications/', views.NotificationsView.as_view(), name='notifications'),
+    
+    #Request
+    path('requests/', views.request_list, name='request_list'),  
+    path('requests/create/', views.create_request, name='create_request'),
+    path('requests/update/<int:request_id>/', views.update_request_status, name='update_request_status')
 ]

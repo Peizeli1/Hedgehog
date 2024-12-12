@@ -2,7 +2,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
-from .models import User, Booking, Course, Student
+from .models import User, Booking, Course, Student, StudentRequest
 
 
 class LogInForm(forms.Form):
@@ -164,3 +164,17 @@ class BookingForm(forms.ModelForm):
 
         if Booking.objects.filter(student=student, course=course).exists():
             self.add_error('course', 'This student is already booked for this course.')
+
+class StudentRequestForm(forms.ModelForm):
+    class Meta:
+        model = StudentRequest
+        fields = ['description']
+        
+class UpdateRequestForm(forms.ModelForm):
+    class Meta:
+        model = StudentRequest
+        fields = ['status', 'allocated_to']
+    admin_reply = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Add a reply (optional)...'}),
+        required=False
+    )

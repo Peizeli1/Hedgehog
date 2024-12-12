@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Request</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'custom.css' %}">
+</head>
+<body>
+    <div class="dash-card">
+        <h1 class="text-center">Create a New Request</h1>
+        {% if user.role != "student" %}
+            <div class="alert alert-warning">
+                Only students can create requests.
+            </div>
+            <a href="{% url 'tutorials:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        {% else %}
+        <form method="post" class="form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'tutorials:request_list' %}" class="btn btn-secondary">Back to Requests</a>
+        </div>
+        {% endif %}
+    </div>    
+</body>
+</html>
