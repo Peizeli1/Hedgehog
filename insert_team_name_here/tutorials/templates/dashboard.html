@@ -49,7 +49,7 @@
         {% if user.role == "tutor" %}
           {% for day in events_by_day %}
             {% if day.events %}
-              <p><strong>{{ day.day|date:"F j, Y" }}</strong></p>
+              <p><strong>{ day.day|date:"F j, Y" }</strong></p>
               <ul class="course=list">
                 {% for event in day.events %}
                   <li>{{ event.course_name }} - {{ event.time }} (Student: {{ event.student_name }})</li>
@@ -199,7 +199,7 @@
                 {% for day in events_by_day %}
                   {% if day.events %}
                     <tr>
-                      <td rowspan="{{ day.events|length }}">{{ day.day|date:"F j, Y" }}</td>
+                      <td rowspan="{{ day.events|length }}">{day.day|date:"F j, Y" }</td>
                       {% for event in day.events %}
                         <td>{{ event.course_name }}</td>
                         <td>{{ event.time }}</td>
@@ -248,7 +248,7 @@
           <tr>
             <td>{{ forloop.counter }}</td>
             <td>${{ invoice.amount }}</td>
-            <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+            <td>{ invoice.due_date|date:"M d, Y" }</td>
             <td>
               <span class="badge bg-warning">Pending</span>
             </td>
@@ -279,7 +279,7 @@
                   <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>${{ invoice.amount }}</td>
-                    <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+                    <td>{ invoice.due_date|date:"M d, Y" }</td>
                     <td>
                       <span class="badge bg-warning">Pending</span>
                     </td>
@@ -351,5 +351,6 @@
       </div>
     </div>
   </div>
-
+</div>
 {% endblock %}
+</div>
