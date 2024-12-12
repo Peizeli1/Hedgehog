@@ -16,7 +16,7 @@
       This is the central hub for managing your information, course schedules,
       and more.
     </p>
-    
+
     <!-- User Account Information -->
     <div class="summary-cards d-flex justify-content-between">
       <div class="card flex-item rounded p-3 shadow-sm">
@@ -24,6 +24,7 @@
         <p>Registration Date: {{ user.date_joined }}</p>
         <p>Email: {{ user.email }}</p>
       </div>
+      
       <div class="card flex-item rounded p-3 shadow-sm">
         <h6>Unread Notifications</h6>
         <p>You have <span id="unreadNotificationsCount">{{ unread_notifications_count }}</span> unread notifications.</p>
@@ -31,20 +32,37 @@
           class="btn btn-sm btn-primary"
           data-bs-toggle="modal"
           data-bs-target="#notificationsModal"
-          onclick="loadNotifications()"
         >
           View Notifications
         </button>
       </div>
+
+      
       <div class="card flex-item rounded p-3 shadow-sm">
         <h6>My Courses</h6>
-        <p>You are currently enrolled in {{ course_count }} courses.</p>
-        <p class="card-text">Next Class: {{ next_course_datetime }}</p>
-        <p class="card-text">Course Topic: {{ next_course_name }}</p>
+        
+        {% if user.role == "tutor" %}
+          {% for day in events_by_day %}
+            {% if day.events %}
+              <p><strong>{{ day.day|date:"F j, Y" }}</strong></p>
+              <ul class="course=list">
+                {% for event in day.events %}
+                  <li>{{ event.course_name }} - {{ event.time }} (Student: {{ event.student_name }})</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <p>You are currently enrolled in {{ course_count }} courses.</p>
+          <p class="card-text">Next Class: {{ next_course_datetime }}</p>
+          <p class="card-text">Course Topic: {{ next_course_name }}</p>
+        {% endif %}
+        
       </div>
     </div>
 
-    <!-- Conditional Calendar Rendering -->
+
+
     <h2 class="text-center">Calendar for {{ month }} {{ year }}</h2>
     <div class="ht-weekdays">
       <div class="ht-weekday">Mon</div>
@@ -56,28 +74,51 @@
       <div class="ht-weekday">Sun</div>
     </div>
     <div class="ht-calendar">
-      {% if user.student %}
-<!-- Display Calendar with Student's Lessons with Tutors -->
-{% for entry in events_by_day %}
-  <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
-    <span>{{ entry.day.day }}</span>
-    {% if entry.events %}
-      <div class="ht-event-container">
-        {% for event in entry.events %}
-          <div class="ht-event {% if event.status == 'Completed' %}ht-completed{% elif event.status == 'Upcoming' %}ht-upcoming{% endif %}">
-            <strong>{{ event.course_name }}</strong><br>
-            Time: {{ event.time }}<br>
-            <span class="ht-status">{{ event.status }}</span>
+      {% if user.role == "admin" %}
+        <!-- Admin View: Display All Students' Events -->
+        {% for entry in events_by_day %}
+      <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
+        <span>{{ entry.day.day }}</span>
+        {% if entry.events %}
+          <div class="ht-event-container">
+            {% for event in entry.events %}
+              <div class="ht-event {% if event.status == 'Completed' %}ht-completed{% elif event.status == 'Upcoming' %}ht-upcoming{% endif %}">
+                <strong>{{ event.course_name }}</strong><br>
+                Time: {{ event.time }}<br>
+                <span class="ht-status">{{ event.status }}</span>
+                <span class="ht-student-name">Student: {{ event.student_name }}</span><br>
+               <span class="ht-tutor-name">Tutor: {{ event.tutor_name }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p>No events for this day.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+      {% elif user.student %}
+        <!-- Student View: Display Student's Lessons with Tutors -->
+        {% for entry in events_by_day %}
+          <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
+            <span>{{ entry.day.day }}</span>
+            {% if entry.events %}
+              <div class="ht-event-container">
+                {% for event in entry.events %}
+                  <div class="ht-event {% if event.status == 'Completed' %}ht-completed{% elif event.status == 'Upcoming' %}ht-upcoming{% endif %}">
+                    <strong>{{ event.course_name }}</strong><br>
+                    Time: {{ event.time }}<br>
+                    <span class="ht-status">{{ event.status }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p>No events for this day.</p>
+            {% endif %}
           </div>
         {% endfor %}
-      </div>
-    {% else %}
-      <p>No events for this day.</p>
-    {% endif %}
-  </div>
-{% endfor %}
       {% elif user.tutor %}
-        <!-- Display Calendar with Tutor's Lessons with Students -->
+        <!-- Tutor View: Display Tutor's Lessons with Students -->
         {% for entry in events_by_day %}
           <div class="ht-day {% if entry.day == today %}ht-today{% endif %} {% if entry.events %}ht-with-events{% endif %}">
             <span>{{ entry.day.day }}</span>
@@ -101,125 +142,154 @@
 
     <!-- Booking and Invoice Sections -->
     {% if user.student %}
-  <!-- Student's Bookings -->
-  <h2 class="mt-4">My Bookings</h2>
-  <div class="table-responsive">
-    <div class="card">
-      <table id="posts" class="table table-striped">
-        {% if user.student.enrollments.exists %}
-          <thead>
-            <tr>
-              <th style="width:25%">Course Name</th>
-              <th style="width:25%">Day</th>
-              <th style="width:15%">Time</th>
-              <th style="width:15%">Tutor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for enrollment in user.student.enrollments.all %}
-              <tr>
-                <td>{{ enrollment.course.course_type.name }}</td>
-                <td>{{ enrollment.course.day_of_week }}</td>
-                <td>{{ enrollment.course.time_slot }}</td>
-                <td>{{ enrollment.course.tutor.user.full_name }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        {% else %}
-          <p class="text-muted">
-            You have no bookings yet.
-            <a href="{% url 'tutorials:course_booking' %}">Book a course</a> now!
-          </p>
-        {% endif %}
-      </table>
-    </div>
-  </div>
-{% elif user.tutor %}
-  <!-- Tutor's Bookings -->
-<h2 class="mt-4">Student Bookings</h2>
-<div class="table-responsive">
-  <div class="card">
-    <table id="posts" class="table table-striped">
-      {% if events_by_day %}
-        <thead>
-          <tr>
-            <th>Event Date</th>
-            <th>Course Name</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for day in events_by_day %}
-            {% if day.events %}
-            <tr>
-              <td>{{ day.day|date:"F j, Y" }}</td>
-              {% for event in day.events %}
-              <td>{{ event.course_name }}</td>
-              <td>{{ event.time }}</td>
-              <td>{{ event.student_name }}</td>
-             
-                  
-                
-
+      <!-- Student's Bookings -->
+      <h2 class="mt-4">My Bookings</h2>
+      <div class="table-responsive">
+        <div class="card">
+          <table id="posts" class="table table-striped">
+            {% if user.student.enrollments.exists %}
+              <thead>
+                <tr>
+                  <th style="width:25%">Course Name</th>
+                  <th style="width:25%">Day</th>
+                  <th style="width:15%">Time</th>
+                  <th style="width:15%">Tutor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enrollment in user.student.enrollments.all %}
+                  <tr>
+                    <td>{{ enrollment.course.course_type.name }}</td>
+                    <td>{{ enrollment.course.day_of_week }}</td>
+                    <td>{{ enrollment.course.time_slot }}</td>
+                    <td>{{ enrollment.course.tutor.user.full_name }}</td>
+                  </tr>
                 {% endfor %}
-              </td>
-            </tr>
+              </tbody>
+            {% else %}
+              <p class="text-muted">
+                You have no bookings yet.
+                <a href="{% url 'tutorials:course_booking' %}">Book a course</a> now!
+              </p>
             {% endif %}
-          {% endfor %}
-        </tbody>
-      {% else %}
-        <p class="text-muted">You don't have any student bookings yet.</p>
-      {% endif %}
-    </table>
-  </div>
-</div>
-{% else %}
-  <p class="text-muted">
-    You don't have a student or tutor profile yet. Please create one to proceed.
-  </p>
-{% endif %}
-
-
-    <!-- Invoice Section -->
-    <div class="row mt-4">
-      <div class="col-md-12">
-          <div class="card">
-              <div class="card-header">
-                  <h5 class="mb-0">My Pending Invoices</h5>
-              </div>
-              <div class="card-body">
-                  {% if invoices %}
-                  <table class="table table-striped table-bordered">
-                      <thead>
-                          <tr>
-                              <th>#</th>
-                              <th>Course Name</th>
-                              <th>Amount</th>
-                              <th>Due Date</th>
-                              <th>Status</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {% for invoice in invoices %}
-                          <tr>
-                              <td>{{ forloop.counter }}</td>
-                              <td>{{ invoice.course.course_type.name }}</td>
-                              <td>${{ invoice.amount }}</td>
-                              <td>{{ invoice.due_date|date:"M d, Y" }}</td>
-                              <td>
-                                  <span class="badge bg-warning">Pending</span>
-                              </td>
-                          </tr>
-                          {% endfor %}
-                      </tbody>
-                  </table>
-                  {% else %}
-                  <p class="text-muted">You currently have no pending invoices.</p>
-                  {% endif %}
-              </div>
-          </div>
+          </table>
+        </div>
       </div>
-    </div>
+    {% elif user.tutor %}
+      <!-- Tutor's Bookings -->
+      <h2 class="mt-4">Student Bookings</h2>
+      <div class="table-responsive">
+        <div class="card">
+          <table id="posts" class="table table-striped">
+            {% if events_by_day %}
+              <thead>
+                <tr>
+                  <th>Event Date</th>
+                  <th>Course Name</th>
+                  <th>Time</th>
+                  <th>Student Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for day in events_by_day %}
+                  {% if day.events %}
+                    <tr>
+                      <td rowspan="{{ day.events|length }}">{{ day.day|date:"F j, Y" }}</td>
+                      {% for event in day.events %}
+                        <td>{{ event.course_name }}</td>
+                        <td>{{ event.time }}</td>
+                        <td>{{ event.student_name }}</td>
+                      </tr>
+                      {% if not loop.last %}
+                        <tr>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            {% else %}
+              <p class="text-muted">You don't have any student bookings yet.</p>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-muted">
+
+      </p>
+    {% endif %}
+
+    {% if user.role == "admin" %}
+  <h2 class="mt-4">Student Invoices</h2>
+{% elif user.role == "student" %}
+  <h2 class="mt-4">My Invoices</h2>
+{% endif %}
+  
+  <div class="card-body">
+    {% if user.role == "admin" %}
+  <!-- Admin View: Display All Invoices -->
+  {% if invoices %}
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Amount</th>
+          <th>Due Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>${{ invoice.amount }}</td>
+            <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+            <td>
+              <span class="badge bg-warning">Pending</span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No pending invoices for any students.</p>
+  {% endif %}
+
+    {% elif user.role == "student" %}
+      <!-- Student View: Display Own Invoices -->
+      {% if invoices %}
+        <div class="table-responsive">
+          <div class="card">
+            <table id="posts" class="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for invoice in invoices %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>${{ invoice.amount }}</td>
+                    <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+                    <td>
+                      <span class="badge bg-warning">Pending</span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <p class="text-muted">You currently have no pending invoices.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+    
 
   <style>
     .card, .table {
@@ -227,87 +297,54 @@
     }
   </style>
 
-<!-- </div> -->
-
   <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Message</th>
-              <th>Created At</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="notificationsTableBody">
-            <!-- Notifications will be dynamically loaded here -->
-          </tbody>
-        </table>
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>You have {{ unread_notifications_count }} unread notifications.</p>
+          <form method="POST ">
+            {% csrf_token %}
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Notifications</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for notification in notifications %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ notification.message }}</td>
+                    <td>{{ notification.created_at }}</td>
+                    <td>
+                      {% if not notification.is_read %}
+                      <button
+                        type="submit"
+                        name="notification_id"
+                        value="{{ notification.id }}"
+                        class="btn-primary"
+                      >
+                        Mark as Read
+                      </button>
+                      {% else %}
+                      Read
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- JavaScript to handle notifications -->
-<script>
-  function loadNotifications() {
-    fetch('/notifications/', {
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    })
-      .then(response => response.json())
-      .then(data => {
-        const tableBody = document.getElementById('notificationsTableBody');
-        tableBody.innerHTML = ''; // Clear existing rows
-        data.notifications.forEach((notification, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${notification.message}</td>
-            <td>${notification.created_at}</td>
-            <td>
-              ${
-                !notification.is_read
-                  ? `<button class="btn btn-sm btn-success" onclick="markAsRead(${notification.id})">Mark as Read</button>`
-                  : 'Read'
-              }
-            </td>
-          `;
-          tableBody.appendChild(row);
-        });
-      })
-      .catch(error => console.error('Error loading notifications:', error));
-  }
-
-  function markAsRead(notificationId) {
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch('/notifications/', {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': csrftoken, 
-      },
-      body: new URLSearchParams({ notification_id: notificationId }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          loadNotifications(); // Reload notifications
-          document.getElementById('unreadNotificationsCount').textContent = data.unread_count;
-        }
-      })
-      .catch(error => console.error('Error marking notification as read:', error));
-  }
-</script>
-</div>
 {% endblock %}

@@ -1,5 +1,8 @@
-<div>
-  <h5 class="text-center mb-4">Are you sure you want to book the following course?</h5>
+{% extends 'base.html' %}
+{% block body %}
+<div class="home-wrapper">
+  <div class="tutor-card">
+  <h5> class="text-center mb-4">Are you sure you want to book the following course?</h5>
   <ul class="list-group">
     <li class="list-group-item"><strong>Course Name:</strong> {{ course.course_type.name }}</li>
     <li class="list-group-item"><strong>Tutor:</strong> {{ course.tutor.user.full_name }}</li>
@@ -29,19 +32,18 @@
   >
     {% csrf_token %}
     <div class="d-flex justify-content-between mt-3">
-      <button
-        type="button"
-        class="btn btn-secondary"
-        data-bs-dismiss="modal"
-      >
+      <a href="{% url 'tutorials:course_booking' %}" class="btn btn-secondary" class="btn btn-secondary" type="button">
         Cancel
-      </button>
+    </a>
       <button
         type="submit"
         class="btn btn-primary"
       >
-        Confirm Booking
+        Confirm
       </button>
     </div>
   </form>
 </div>
+</div>
+</div>
+{% endblock %}

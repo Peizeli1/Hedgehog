@@ -26,7 +26,7 @@ class RoleRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if request.user.role not in self.allowed_roles:
             messages.error(request, "You are not authorized to access this page.")
-            return redirect('tutorials:dashboard')  # Redirect unauthorized users to the dashboard
+            return redirect('tutorials:dashboard')
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -69,7 +69,7 @@ class LogInView(LoginProhibitedMixin, View):
     def get(self, request):
         """Render the login template with the form."""
         form = LogInForm()
-        next_url = request.GET.get('next', '')  # Capture the next URL if provided
+        next_url = request.GET.get('next', '')
         return render(request, 'log_in.html', {'form': form, 'next': next_url})
 
     def post(self, request):
@@ -167,13 +167,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         now = datetime.now()
         year, month = now.year, now.month
 
-        # Fetch unread notifications count
-        context['unread_notifications_count'] = Notification.objects.filter(user=user, is_read=False).count()
+        notifications = Notification.objects.filter(user=user).order_by('-created_at')
+        unread_notifications_count = notifications.filter(is_read=False).count()
+
+        context['notifications'] = notifications
+        context['unread_notifications_count'] = unread_notifications_count
         
         context['month'] = now.strftime('%B')
         context['year'] = year
 
-        # Fetch courses enrolled and upcoming course details
         if user.role == 'student':
             student = user.student
             
@@ -193,7 +195,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['next_course_datetime'] = next_course.course.time_slot if next_course else "No upcoming courses"
             context['next_course_name'] = next_course.course.course_type.name if next_course else "N/A"
 
-            # # Fetch unpaid invoices
             context['invoices'] = Invoice.objects.filter(student=student, status='Unpaid').order_by('due_date')
 
         elif user.role == 'tutor':
@@ -213,10 +214,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             })
         
         elif user.role == 'admin':
-            pass
+            all_students = Student.objects.all()
+            all_enrollments = CourseEnrollment.objects.select_related('course', 'student').filter(student__in=all_students).order_by('course__time_slot')
+            
+            events_by_day, today = self.generate_calendar_events_for_admin(all_students, year, month)
+            context['events_by_day'] = events_by_day
+            context['today'] = today
+            context['invoices'] = Invoice.objects.filter(status='Unpaid').order_by('due_date')
+            context['all_courses'] = Course.objects.all()
+            context['all_bookings'] = all_enrollments
 
         return context
-    
 
     def generate_calendar_events(self, student, year, month):
         """Generate calendar events for the student."""
@@ -225,6 +233,39 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def generate_calendar_events_for_tutor(self, tutor, year, month):
         """Generate calendar events for the tutor."""
         return self._generate_calendar_events_for_user(tutor.user, year, month)
+
+    def generate_calendar_events_for_admin(self, students, year, month):
+        """Generate calendar events for all students (for admin view)."""
+        events_by_day = {}
+        today = date.today()
+        for student in students:
+            enrollments = CourseEnrollment.objects.filter(student=student)
+            for enrollment in enrollments:
+                course = enrollment.course
+                course_date = self.get_course_date_for_month(course, year, month, today)
+
+                if course_date and course_date.month == month and course_date.year == year and course_date >= today:
+                    if course_date not in events_by_day:
+                        events_by_day[course_date] = []
+
+                    events_by_day[course_date].append(
+                        {
+                            "course_name": course.course_type.name,
+                            "student_name": student.user.get_full_name(),
+                            "time": course.time_slot.strftime("%H:%M %p"),
+                            "status": self.get_event_status(course_date),
+                            "tutor_name" : course.tutor.user.get_full_name(),
+                        }
+                    )
+
+        calendar_days = []
+        days_in_month = monthrange(year, month)[1]
+        for day in range(1, days_in_month + 1):
+            day_date = date(year, month, day)
+            day_events = events_by_day.get(day_date, [])
+            calendar_days.append({"day": day_date, "events": day_events})
+
+        return calendar_days, today
 
     def _generate_calendar_events_for_user(self, user, year, month):
         """Helper function to generate calendar events for a user (student or tutor)."""
@@ -258,14 +299,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 if course_date and course_date.month == month and course_date.year == year and course_date >= today:
                     if course_date not in events_by_day:
                         events_by_day[course_date] = []
+                    for enrollment in CourseEnrollment.objects.filter(course=course):
+                        student_name = enrollment.student.user.get_full_name()
+                        events_by_day[course_date].append(
+                            {
+                                "course_name": course.course_type.name,
+                                "time": course.time_slot.strftime("%H:%M %p"),
+                                "status": self.get_event_status(course_date),
+                                "student_name": student_name,
+                            }
+                        )
 
-                    events_by_day[course_date].append(
-                        {
-                            "course_name": course.course_type.name,
-                            "time": course.time_slot.strftime("%H:%M %p"),
-                            "status": self.get_event_status(course_date),
-                        }
-                    )
         calendar_days = []
         for day in range(1, days_in_month + 1):
             day_date = date(year, month, day)
@@ -287,9 +331,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         if target_weekday is None:
             return None 
     
-        day_difference = (target_weekday - first_day_of_month.weekday()) % 7
+        day_difference = (target_weekday - first_day_of_month.weekday()) % 6
         course_date = first_day_of_month + timedelta(days=day_difference)
-
 
         while course_date < today:
             course_date += timedelta(weeks=1)
@@ -355,10 +398,9 @@ class CourseBookingView(LoginRequiredMixin, TemplateView):
         if CourseEnrollment.objects.filter(student=student, course=course).exists():
             messages.error(request, "You have already booked this course.")
         else:
-            # Create the course enrollment
+
             CourseEnrollment.objects.create(student=student, course=course, status='Active')
 
-            # Create a notification for the student
             notification_message = f"You have successfully booked the course '{course.course_type.name}' scheduled on {course.day_of_week} at {course.time_slot}."
             print(notification_message)
             Notification.objects.create(
@@ -367,10 +409,65 @@ class CourseBookingView(LoginRequiredMixin, TemplateView):
                 is_read=False,
             )
 
-            # Success message
             messages.success(request, "Course booked successfully!")
         
         return redirect('tutorials:dashboard')
+    
+class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
+    """View to handle confirmation of course booking."""
+    template_name = 'course_booking_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        """Prepare context data for the template."""
+        context = super().get_context_data(**kwargs)
+        course_id = kwargs.get('course_id')
+        course = get_object_or_404(Course, id=course_id)
+        context['course'] = course
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle the course booking confirmation."""
+        course_id = kwargs.get('course_id')
+        course = get_object_or_404(Course, id=course_id)
+
+        if request.user.role != 'student':
+            messages.error(request, 'Only students can book courses.')
+            return redirect('tutorials:dashboard')
+
+        student = get_object_or_404(Student, user=request.user)
+
+        if CourseEnrollment.objects.filter(student=student, course=course).exists():
+            messages.error(request, 'You are already enrolled in this course.')
+        else:
+
+            CourseEnrollment.objects.create(student=student, course=course, status='Active')
+
+            due_date = datetime.now() + timedelta(days=30)
+            invoice = Invoice.objects.create(
+                student=student,
+                course=course,
+                amount=course.course_type.cost,
+                status='Unpaid',
+                due_date=due_date
+            )
+
+            notification_message = f"You have successfully booked the course '{course.course_type.name}' scheduled on {course.day_of_week} at {course.time_slot}."
+            Notification.objects.create(
+                user=student.user,
+                message=notification_message,
+                is_read=False,
+            )
+
+            Notification.objects.create(
+                user=student.user,
+                message=f"Invoice for the course '{course.course_type.name}' is due on {invoice.due_date.strftime('%Y-%m-%d')}.",
+                is_read=False,
+            )
+
+            messages.success(request, "Course booked successfully! An invoice has been generated.")
+
+        return redirect('tutorials:dashboard')
+    
 
 
 class InvoiceView(LoginRequiredMixin, TemplateView):
@@ -399,65 +496,7 @@ class InvoiceView(LoginRequiredMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
-    """View to handle confirmation of course booking."""
-    template_name = 'course_booking_confirm.html'
 
-    def get_context_data(self, **kwargs):
-        """Prepare context data for the template."""
-        context = super().get_context_data(**kwargs)
-        course_id = kwargs.get('course_id')
-        course = get_object_or_404(Course, id=course_id)
-        context['course'] = course
-        return context
-
-    def post(self, request, *args, **kwargs):
-        """Handle the course booking confirmation."""
-        course_id = kwargs.get('course_id')
-        course = get_object_or_404(Course, id=course_id)
-
-        if request.user.role != 'student':
-            messages.error(request, 'Only students can book courses.')
-            return redirect('tutorials:dashboard')
-
-        student = get_object_or_404(Student, user=request.user)
-
-        if CourseEnrollment.objects.filter(student=student, course=course).exists():
-            messages.error(request, 'You are already enrolled in this course.')
-        else:
-            # Create course enrollment
-            CourseEnrollment.objects.create(student=student, course=course, status='Active')
-
-            # Generate an invoice
-            due_date = datetime.now() + timedelta(days=30)
-            invoice = Invoice.objects.create(
-                student=student,
-                course=course,
-                amount=course.course_type.cost,  # Assuming `cost` is a field in `CourseType`
-                status='Unpaid',
-                due_date=due_date
-            )
-
-            # Create notification for booking
-            notification_message = f"You have successfully booked the course '{course.course_type.name}' scheduled on {course.day_of_week} at {course.time_slot}."
-            Notification.objects.create(
-                user=student.user,
-                message=notification_message,
-                is_read=False,
-            )
-
-            # Create notification for the invoice
-            Notification.objects.create(
-                user=student.user,
-                message=f"Invoice for the course '{course.course_type.name}' is due on {invoice.due_date.strftime('%Y-%m-%d')}.",
-                is_read=False,
-            )
-
-            # Success message
-            messages.success(request, "Course booked successfully! An invoice has been generated.")
-
-        return redirect('tutorials:dashboard')
-    
 
 class NotificationsView(LoginRequiredMixin, View):
     """Handle notification-related requests."""

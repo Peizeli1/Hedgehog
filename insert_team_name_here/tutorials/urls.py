@@ -13,7 +13,8 @@ urlpatterns = [
     path('log_out/', views.LogOutView.as_view(), name='log_out'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path('password/', views.PasswordView.as_view(), name='password'),
-
+    path('notifications/', views.NotificationsView.as_view(), name='notifications'),
+    path('mark_as_read/<int:notification_id>/', views.NotificationsView.as_view(), name='mark_as_read'),
     # Profile Management
     path('profile/', views.ProfileUpdateView.as_view(), name='profile_update'),
 

@@ -15,6 +15,20 @@ html,body {
   }
 
 
+  .course-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+    list-style: none;
+  }
+  
+  .course-list li {
+    margin-bottom: 5px;
+    list-style-type: none;
+    list-style: none;
+  }
+  
+
 .form-text, .text-danger {
   text-align: left;
 }
