@@ -258,9 +258,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                             "course_name": course.course_type.name,
                             "student_name": student.user.get_full_name(),
                             "time": course.time_slot.strftime("%H:%M %p"),
-                            "status": self.get_event_status(
-                                datetime.combine(course_date, datetime.min.time()) if isinstance(course_date,
-                                                                                                 date) else course_date),
+                            "status": self.get_event_status(datetime.combine(course_date, datetime.min.time()) if isinstance(course_date, date) else course_date),
                             "tutor_name": course.tutor.user.get_full_name(),
                         }
                     )
@@ -312,7 +310,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                             {
                                 "course_name": course.course_type.name,
                                 "time": course.time_slot.strftime("%H:%M %p"),
-                                "status": self.get_event_status(course_date),
+                                "status": self.get_event_status(datetime.combine(course_date, course.time_slot)),
                                 "student_name": student_name,
                             }
                         )
@@ -354,9 +352,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         now = datetime.now()
         if isinstance(event_datetime, date) and not isinstance(event_datetime, datetime):
             event_datetime = datetime.combine(event_datetime, datetime.min.time())
+        if event_datetime.date() == now.date() and event_datetime.time() > now.time():
+            return "Upcoming"
         if event_datetime > now:
             return "Upcoming"
         return "Completed"
+        
+
 
     def dispatch(self, request, *args, **kwargs):
         """Redirect non-authenticated users to the login page."""
