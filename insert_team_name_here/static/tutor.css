@@ -179,8 +179,8 @@ html,body {
 }
 
 .ht-today {
-    background-color: #007bff;
-    color: white;
+    background-color: #007bff !important;
+    color: black;
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
