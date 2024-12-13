@@ -5,11 +5,11 @@ from tutorials.models import User
 
 class HomeViewTestCase(TestCase):
     """Tests of the home view."""
-
-    fixtures = ['tutorials/fixtures/default_user.json']
+    
+    fixtures = ['mock_data.json']
 
     def setUp(self):
-        self.url = reverse('home')
+        self.url = reverse('tutorials:home')
         self.user = User.objects.get(username='@johndoe')
 
     def test_home_url(self):
@@ -23,6 +23,6 @@ class HomeViewTestCase(TestCase):
     def test_get_home_redirects_when_logged_in(self):
         self.client.login(username=self.user.username, password="Password123")
         response = self.client.get(self.url, follow=True)
-        redirect_url = reverse('dashboard')
+        redirect_url = reverse('tutorials:dashboard')
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
         self.assertTemplateUsed(response, 'dashboard.html')

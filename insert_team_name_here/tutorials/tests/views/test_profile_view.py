@@ -8,15 +8,12 @@ from tutorials.tests.helpers import reverse_with_next
 
 class ProfileViewTest(TestCase):
     """Test suite for the profile view."""
-
-    fixtures = [
-        'tutorials/fixtures/default_user.json',
-        'tutorials/fixtures/other_users.json'
-    ]
+    
+    fixtures = ['mock_data.json']
 
     def setUp(self):
         self.user = User.objects.get(username='@johndoe')
-        self.url = reverse('profile')
+        self.url = reverse('tutorials:profile_update')
         self.form_input = {
             'first_name': 'John2',
             'last_name': 'Doe2',
@@ -37,7 +34,7 @@ class ProfileViewTest(TestCase):
         self.assertEqual(form.instance, self.user)
 
     def test_get_profile_redirects_when_not_logged_in(self):
-        redirect_url = reverse_with_next('log_in', self.url)
+        redirect_url = reverse_with_next('tutorials:log_in', self.url)
         response = self.client.get(self.url)
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
 
@@ -83,7 +80,7 @@ class ProfileViewTest(TestCase):
         response = self.client.post(self.url, self.form_input, follow=True)
         after_count = User.objects.count()
         self.assertEqual(after_count, before_count)
-        response_url = reverse('dashboard')
+        response_url = reverse('tutorials:dashboard')
         self.assertRedirects(response, response_url, status_code=302, target_status_code=200)
         self.assertTemplateUsed(response, 'dashboard.html')
         messages_list = list(response.context['messages'])
@@ -96,6 +93,6 @@ class ProfileViewTest(TestCase):
         self.assertEqual(self.user.email, 'johndoe2@example.org')
 
     def test_post_profile_redirects_when_not_logged_in(self):
-        redirect_url = reverse_with_next('log_in', self.url)
+        redirect_url = reverse_with_next('tutorials:log_in', self.url)
         response = self.client.post(self.url, self.form_input)
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)

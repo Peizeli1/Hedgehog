@@ -6,11 +6,11 @@ from tutorials.models import User, Notification
 class NotificationsViewTestCase(TestCase):
     """Tests of the notifications view."""
 
-    fixtures = ['tutorials/fixtures/default_user.json']
+    fixtures = ['mock_data.json']
 
     def setUp(self):
         self.user = User.objects.get(username='@johndoe')
-        self.url = reverse('notifications')
+        self.url = reverse('tutorials:notifications')
 
     def test_get_notifications_as_authenticated_user(self):
         self.client.login(username=self.user.username, password="Password123")
@@ -20,5 +20,5 @@ class NotificationsViewTestCase(TestCase):
 
     def test_get_notifications_redirects_when_not_logged_in(self):
         response = self.client.get(self.url)
-        redirect_url = reverse('log_in')
+        redirect_url = f"{reverse('tutorials:log_in')}?next={self.url}"
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)

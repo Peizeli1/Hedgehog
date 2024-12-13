@@ -6,11 +6,11 @@ from tutorials.models import User, Student
 class StudentListViewTestCase(TestCase):
     """Tests of the student list view."""
 
-    fixtures = ['tutorials/fixtures/default_user.json']
+    fixtures = ['mock_data.json']
 
     def setUp(self):
         self.admin_user = User.objects.get(username='@admin')
-        self.url = reverse('student_list')
+        self.url = reverse('tutorials:student_list')
 
     def test_student_list_url(self):
         self.assertEqual(self.url, '/students/')
@@ -24,5 +24,5 @@ class StudentListViewTestCase(TestCase):
 
     def test_student_list_redirects_when_not_logged_in(self):
         response = self.client.get(self.url)
-        redirect_url = reverse('log_in')
+        redirect_url = f"{reverse('tutorials:log_in')}?next={self.url}"
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)

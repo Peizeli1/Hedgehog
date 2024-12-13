@@ -1,23 +1,30 @@
 from django.test import TestCase
-from tutorials.models import User, Notification
+from tutorials.models import Notification, User
 
 class NotificationModelTestCase(TestCase):
-    """Unit tests for the Notification model."""
-
-    fixtures = ['default_user.json']
-
     def setUp(self):
-        self.user = User.objects.get(username='@johndoe')
+        # Create a user
+        self.user = User.objects.create_user(
+            username='janedoe',
+            email='janedoe@example.com',
+            password='password123'
+        )
+        # Create a notification for the user
         self.notification = Notification.objects.create(
             user=self.user,
-            message='Test Notification',
+            message="This is a test notification.",
             is_read=False
         )
 
-    def test_notification_creation(self):
-        self.assertEqual(self.notification.user, self.user)
-        self.assertEqual(self.notification.message, 'Test Notification')
-        self.assertFalse(self.notification.is_read)
+    def test_notification_string_representation(self):
+        """Test the string representation of a notification."""
+        truncated_message = "This is a test notif..."
+        expected_str = f"Notification for {self.user.username}: {truncated_message}"
+        self.assertEqual(str(self.notification), expected_str)
 
-    def test_str_representation(self):
-        self.assertEqual(str(self.notification), 'Notification for @johndoe: Test Notification')
+    def test_mark_as_read(self):
+        """Test the mark_as_read method."""
+        self.assertFalse(self.notification.is_read)
+        self.notification.mark_as_read()
+        self.notification.refresh_from_db()
+        self.assertTrue(self.notification.is_read)

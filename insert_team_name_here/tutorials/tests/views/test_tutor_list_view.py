@@ -6,11 +6,11 @@ from tutorials.models import User, Tutor
 class TutorListViewTestCase(TestCase):
     """Tests of the tutor list view."""
 
-    fixtures = ['tutorials/fixtures/default_user.json']
+    fixtures = ['mock_data.json']
 
     def setUp(self):
         self.admin_user = User.objects.get(username='@admin')
-        self.url = reverse('tutor_list')
+        self.url = reverse('tutorials:tutor_list')
 
     def test_tutor_list_url(self):
         self.assertEqual(self.url, '/tutors/')
@@ -21,8 +21,8 @@ class TutorListViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'tutor_list.html')
         self.assertIn('tutors', response.context)
-
+    
     def test_tutor_list_redirects_when_not_logged_in(self):
         response = self.client.get(self.url)
-        redirect_url = reverse('log_in')
+        redirect_url = f"{reverse('tutorials:log_in')}?next={self.url}"
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)

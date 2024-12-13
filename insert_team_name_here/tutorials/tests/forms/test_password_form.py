@@ -1,25 +1,30 @@
-from django.contrib.auth.hashers import check_password
 from django.test import TestCase
-from tutorials.models import User
 from tutorials.forms import PasswordForm
 
 class PasswordFormTestCase(TestCase):
-    fixtures = ['default_user.json', 'other_users.json']
+    """Unit tests for the PasswordForm."""
 
     def setUp(self):
-        self.user = User.objects.get(username='@janedoe')
         self.form_input = {
-            'password': 'Password123',
-            'new_password': 'NewPassword123',
-            'password_confirmation': 'NewPassword123',
+            'password': 'Password123!',
+            'confirm_password': 'Password123!',
         }
 
     def test_form_has_necessary_fields(self):
-        form = PasswordForm(user=self.user)
+        """Test that the form has the necessary fields."""
+        form = PasswordForm()
         self.assertIn('password', form.fields)
         self.assertIn('new_password', form.fields)
         self.assertIn('password_confirmation', form.fields)
 
     def test_valid_form(self):
-        form = PasswordForm(user=self.user, data=self.form_input)
+        """Test that the form is valid when passwords match."""
+        form = PasswordForm(data=self.form_input)
         self.assertTrue(form.is_valid())
+
+    def test_invalid_form_passwords_do_not_match(self):
+        """Test that the form is invalid when passwords do not match."""
+        self.form_input['confirm_password'] = 'DifferentPassword123!'
+        form = PasswordForm(data=self.form_input)
+        self.assertFalse(form.is_valid())
+        self.assertIn('confirm_password', form.errors)

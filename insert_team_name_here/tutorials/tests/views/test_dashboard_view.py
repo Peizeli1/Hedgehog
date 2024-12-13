@@ -5,7 +5,7 @@ from tutorials.models import User, Notification, CourseEnrollment
 class DashboardViewTestCase(TestCase):
     """Test cases for the Dashboard view."""
 
-    fixtures = ['tutorials/fixtures/default_data.json']
+    fixtures = ['mock_data.json']
 
     def setUp(self):
         self.user = User.objects.get(username='@johndoe')

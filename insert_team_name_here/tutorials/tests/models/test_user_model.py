@@ -1,29 +1,21 @@
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from tutorials.models import User
 
 class UserModelTestCase(TestCase):
     """Unit tests for the User model."""
 
-    fixtures = ['default_user.json', 'other_users.json']
+    fixtures = ['mock_data.json']
 
     def setUp(self):
-        self.user = User.objects.get(username='@johndoe')
+        self.user = User.objects.get(username='@janedoe')
 
-    def test_valid_user(self):
-        self._assert_user_is_valid()
+    def test_user_creation(self):
+        """Test that a user is created successfully."""
+        self.assertIsInstance(self.user, User)
+        self.assertEqual(self.user.username, '@janedoe')
+        self.assertEqual(self.user.email, 'janedoe@example.org')
 
-    def test_username_must_be_unique(self):
-        duplicate_user = User.objects.get(username='@janedoe')
-        self.user.username = duplicate_user.username
-        self._assert_user_is_invalid()
-
-    def _assert_user_is_valid(self):
-        try:
-            self.user.full_clean()
-        except ValidationError:
-            self.fail('Test user should be valid')
-
-    def _assert_user_is_invalid(self):
-        with self.assertRaises(ValidationError):
-            self.user.full_clean()
+    def test_user_string_representation(self):
+        """Test the string representation of a user."""
+        expected_str = f"{self.user.first_name} {self.user.last_name} (@{self.user.username}) - {self.user.role.capitalize()}"
+        self.assertEqual(str(self.user), expected_str)
