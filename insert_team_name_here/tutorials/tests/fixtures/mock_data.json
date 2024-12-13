@@ -1,0 +1,116 @@
+[
+    {
+        "model": "tutorials.user",
+        "pk": 1,
+        "fields": {
+            "first_name": "Admin",
+            "last_name": "User",
+            "username": "@admin",
+            "email": "admin@example.org",
+            "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+            "is_active": true,
+            "role": "admin"
+        }
+    },
+    {
+        "model": "tutorials.user",
+        "pk": 2,
+        "fields": {
+            "first_name": "John",
+            "last_name": "Doe",
+            "username": "@johndoe",
+            "email": "johndoe@example.org",
+            "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+            "is_active": true,
+            "role": "tutor"
+        }
+    },
+    {
+        "model": "tutorials.user",
+        "pk": 3,
+        "fields": {
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "username": "@janedoe",
+            "email": "janedoe@example.org",
+            "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+            "is_active": true,
+            "role": "tutor"
+        }
+    },
+    {
+        "model": "tutorials.tutor",
+        "pk": 2,
+        "fields": {
+            "user": 3,
+            "expertise": "Python",
+            "is_available": true
+        }
+    },
+    {
+        "model": "tutorials.coursetype",
+        "pk": 1,
+        "fields": {
+            "name": "Python Basics",
+            "description": "Introduction to Python programming",
+            "skill_level": "Beginner"
+        }
+    },
+    {
+        "model": "tutorials.course",
+        "pk": 1,
+        "fields": {
+            "course_type": 1,
+            "tutor": 2,
+            "day_of_week": "Monday",
+            "time_slot": "10:00:00",
+            "duration": 60,
+            "location": "Room 101",
+            "status": "Scheduled"
+        }
+    },
+    {
+        "model": "tutorials.student",
+        "pk": 1,
+        "fields": {
+            "user": 2,
+            "phone": "1234567890",
+            "programming_level": "Beginner"
+        }
+    },
+    {
+        "model": "tutorials.booking",
+        "pk": 1,
+        "fields": {
+            "student": 1,
+            "course": 1,
+            "booking_date": "2024-12-01T10:00:00Z"
+        }
+    },
+    {
+        "model": "tutorials.user",
+        "pk": 7,
+        "fields": {
+            "first_name": "Student",
+            "last_name": "One",
+            "username": "@student1",
+            "email": "student1@example.com",
+            "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+            "is_active": true,
+            "role": "student"
+        }
+    },
+    {
+        "model": "tutorials.user",
+        "pk": 8,
+        "fields": {
+            "first_name": "Tutor",
+            "last_name": "One",
+            "username": "@tutor1",
+            "email": "tutor1@example.com",
+            "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+            "is_active": true,
+            "role": "tutor"
+        }
+    }
+]
