@@ -20,6 +20,7 @@ def get_next_course(courses):
     now = datetime.datetime.now()
     return courses.filter(course__time_slot__gte=now).order_by('course__time_slot').first()
 
+
 class RoleRequiredMixin:
     """Mixin to restrict view access based on user role."""
     allowed_roles = []
@@ -85,6 +86,7 @@ class LogInView(LoginProhibitedMixin, View):
                 return redirect(next_url)
             messages.error(request, "Invalid username or password.")
         return render(request, 'log_in.html', {'form': form, 'next': next_url})
+
 
 class LogOutView(View):
     """Class-based view to handle user logout."""
@@ -160,7 +162,7 @@ class SignUpView(LoginProhibitedMixin, View):
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Display the user's dashboard."""
     template_name = "dashboard.html"
-    
+
     def get_context_data(self, **kwargs):
         """Provide context for the dashboard."""
         context = super().get_context_data(**kwargs)
@@ -173,26 +175,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         context['notifications'] = notifications
         context['unread_notifications_count'] = unread_notifications_count
-        
+
         context['month'] = now.strftime('%B')
         context['year'] = year
 
         if user.role == 'student':
             student = user.student
-            
+
             available_courses = Course.objects.filter(
                 tutor__is_available=True,
                 course_type__skill_level=student.programming_level
             ).exclude(enrollments__student=student)
             context['available_courses'] = available_courses
-            
+
             context['course_count'] = CourseEnrollment.objects.filter(student=student).count()
-            next_course = CourseEnrollment.objects.filter(student=student, status='Active').order_by('course__time_slot').first()
-            
+            next_course = CourseEnrollment.objects.filter(student=student, status='Active').order_by(
+                'course__time_slot').first()
+
             events_by_day, today = self.generate_calendar_events(student, year, month)
             context['events_by_day'] = events_by_day
             context['today'] = today
-            
+
             context['next_course_datetime'] = next_course.course.time_slot if next_course else "No upcoming courses"
             context['next_course_name'] = next_course.course.course_type.name if next_course else "N/A"
 
@@ -213,11 +216,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'next_course_name': 'N/A',
                 'invoices': []
             })
-        
+
         elif user.role == 'admin':
             all_students = Student.objects.all()
-            all_enrollments = CourseEnrollment.objects.select_related('course', 'student').filter(student__in=all_students).order_by('course__time_slot')
-            
+            all_enrollments = CourseEnrollment.objects.select_related('course', 'student').filter(
+                student__in=all_students).order_by('course__time_slot')
+
             events_by_day, today = self.generate_calendar_events_for_admin(all_students, year, month)
             context['events_by_day'] = events_by_day
             context['today'] = today
@@ -254,8 +258,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                             "course_name": course.course_type.name,
                             "student_name": student.user.get_full_name(),
                             "time": course.time_slot.strftime("%H:%M %p"),
-                            "status": self.get_event_status(datetime.combine(course_date, course.time_slot)),
-                            "tutor_name" : course.tutor.user.get_full_name(),
+                            "status": self.get_event_status(
+                                datetime.combine(course_date, datetime.min.time()) if isinstance(course_date,
+                                                                                                 date) else course_date),
+                            "tutor_name": course.tutor.user.get_full_name(),
                         }
                     )
 
@@ -330,9 +336,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         target_weekday = days_of_week.get(course.day_of_week, None)
 
         if target_weekday is None:
-            return None 
-    
-        day_difference = (target_weekday - first_day_of_month.weekday()) %7
+            return None
+
+        day_difference = (target_weekday - first_day_of_month.weekday()) % 7
         course_date = first_day_of_month + timedelta(days=day_difference)
 
         while course_date < today:
@@ -346,10 +352,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_event_status(self, event_datetime):
         """Determine the status of an event based on its datetime."""
         now = datetime.now()
+        if isinstance(event_datetime, date) and not isinstance(event_datetime, datetime):
+            event_datetime = datetime.combine(event_datetime, datetime.min.time())
         if event_datetime > now:
             return "Upcoming"
         return "Completed"
-
 
     def dispatch(self, request, *args, **kwargs):
         """Redirect non-authenticated users to the login page."""
@@ -357,12 +364,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             return super().dispatch(request, *args, **kwargs)
         return redirect('tutorials:log_in')
 
+
 class StudentListView(LoginRequiredMixin, RoleRequiredMixin, ListView):
     """List all students."""
     model = Student
     template_name = 'student_list.html'
     context_object_name = 'students'
-    allowed_roles = ['admin', 'tutor'] 
+    allowed_roles = ['admin', 'tutor']
 
     def get_queryset(self):
         return super().get_queryset().order_by('user__last_name')
@@ -375,8 +383,9 @@ class TutorListView(LoginRequiredMixin, ListView):
     context_object_name = 'tutors'
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('user').prefetch_related('advanced_courses').order_by('user__last_name')
-        print("Debug: Queryset contains the following tutors:", queryset)  
+        queryset = super().get_queryset().select_related('user').prefetch_related('advanced_courses').order_by(
+            'user__last_name')
+        print("Debug: Queryset contains the following tutors:", queryset)
         return queryset
 
 
@@ -387,7 +396,8 @@ class CourseBookingView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         """Generate the context data for rendering the template."""
         context = super().get_context_data(**kwargs)
-        context['available_courses'] = Course.objects.filter(tutor__is_available=True).select_related('tutor', 'course_type')
+        context['available_courses'] = Course.objects.filter(tutor__is_available=True).select_related('tutor',
+                                                                                                      'course_type')
         return context
 
     def post(self, request):
@@ -412,9 +422,10 @@ class CourseBookingView(LoginRequiredMixin, TemplateView):
             )
 
             messages.success(request, "Course booked successfully!")
-        
+
         return redirect('tutorials:dashboard')
-    
+
+
 class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
     """View to handle confirmation of course booking."""
     template_name = 'course_booking_confirm.html'
@@ -469,7 +480,6 @@ class CourseBookingConfirmView(LoginRequiredMixin, TemplateView):
             messages.success(request, "Course booked successfully! An invoice has been generated.")
 
         return redirect('tutorials:dashboard')
-    
 
 
 class InvoiceView(LoginRequiredMixin, TemplateView):
@@ -498,11 +508,9 @@ class InvoiceView(LoginRequiredMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-
-
 class NotificationsView(LoginRequiredMixin, View):
     """Handle notification-related requests."""
-    
+
     def get(self, request):
         """Handle AJAX GET requests to fetch notifications."""
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -525,11 +533,10 @@ class NotificationsView(LoginRequiredMixin, View):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             notification_id = request.POST.get('notification_id')
             notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-            notification.mark_as_read() 
+            notification.mark_as_read()
             unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
             return JsonResponse({'success': True, 'unread_count': unread_count})
         return JsonResponse({'error': 'Invalid request'}, status=400)
-
 
 
 @login_required
@@ -542,7 +549,6 @@ def request_list(request):
         return redirect('tutorials:dashboard')
     return render(request, 'requests/request_list.html', {'requests': requests, 'user': request.user})
 
-    
 
 @login_required
 def create_request(request):
@@ -560,23 +566,24 @@ def create_request(request):
 
     return render(request, 'requests/create_request.html', {'form': form})
 
+
 @login_required
 def update_request_status(request, request_id):
     student_request = get_object_or_404(StudentRequest, id=request_id)
     if request.user.role != 'admin':
         return redirect('tutorials:dashboard')
-    
+
     if request.method == 'POST':
         form = UpdateRequestForm(request.POST)
         if form.is_valid():
             reply_text = form.cleaned_data.get('admin_reply')
-            if reply_text: 
+            if reply_text:
                 RequestReply.objects.create(
                     student_request=student_request,
                     replied_by=request.user,
                     reply_text=reply_text,
                 )
-            
+
             student_request.status = form.cleaned_data.get('status')
             student_request.allocated_to = form.cleaned_data.get('allocated_to')
             student_request.save()
@@ -586,10 +593,10 @@ def update_request_status(request, request_id):
     else:
         form = UpdateRequestForm(instance=student_request)
 
-    replies = student_request.replies.all() 
+    replies = student_request.replies.all()
 
     return render(request, 'requests/update_status.html', {
         'form': form,
         'student_request': student_request,
-        'replies': replies, 
+        'replies': replies,
     })
