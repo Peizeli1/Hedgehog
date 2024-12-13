@@ -254,7 +254,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                             "course_name": course.course_type.name,
                             "student_name": student.user.get_full_name(),
                             "time": course.time_slot.strftime("%H:%M %p"),
-                            "status": self.get_event_status(course_date),
+                            "status": self.get_event_status(datetime.combine(course_date, course.time_slot)),
                             "tutor_name" : course.tutor.user.get_full_name(),
                         }
                     )
@@ -289,7 +289,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                         {
                             "course_name": course.course_type.name,
                             "time": course.time_slot.strftime("%H:%M %p"),
-                            "status": self.get_event_status(course_date),
+                            "status": self.get_event_status(datetime.combine(course_date, course.time_slot)),
                         }
                     )
         elif user.role == 'tutor':
@@ -332,7 +332,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         if target_weekday is None:
             return None 
     
-        day_difference = (target_weekday - first_day_of_month.weekday()) % 6
+        day_difference = (target_weekday - first_day_of_month.weekday()) %7
         course_date = first_day_of_month + timedelta(days=day_difference)
 
         while course_date < today:
@@ -343,12 +343,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         return None
 
-    def get_event_status(self, event_date):
-        """Determine the status of an event based on its date."""
-        today = date.today()
-        if event_date > today:
+    def get_event_status(self, event_datetime):
+        """Determine the status of an event based on its datetime."""
+        now = datetime.now()
+        if event_datetime > now:
             return "Upcoming"
         return "Completed"
+
 
     def dispatch(self, request, *args, **kwargs):
         """Redirect non-authenticated users to the login page."""

@@ -49,7 +49,7 @@
         {% if user.role == "tutor" %}
           {% for day in events_by_day %}
             {% if day.events %}
-              <p><strong>{ day.day|date:"F j, Y" }</strong></p>
+              <p><strong>{{ day.day|date:"F j, Y" }}</strong></p>
               <ul class="course=list">
                 {% for event in day.events %}
                   <li>{{ event.course_name }} - {{ event.time }} (Student: {{ event.student_name }})</li>
@@ -70,13 +70,13 @@
 
     <h2 class="text-center">Calendar for {{ month }} {{ year }}</h2>
     <div class="ht-weekdays">
+      <div class="ht-weekday">Sun</div>
       <div class="ht-weekday">Mon</div>
       <div class="ht-weekday">Tue</div>
       <div class="ht-weekday">Wed</div>
       <div class="ht-weekday">Thu</div>
       <div class="ht-weekday">Fri</div>
       <div class="ht-weekday">Sat</div>
-      <div class="ht-weekday">Sun</div>
     </div>
     <div class="ht-calendar">
       {% if user.role == "admin" %}
@@ -199,7 +199,7 @@
                 {% for day in events_by_day %}
                   {% if day.events %}
                     <tr>
-                      <td rowspan="{{ day.events|length }}">{day.day|date:"F j, Y" }</td>
+                      <td rowspan="{{ day.events|length }}">{{day.day|date:"F j, Y" }}</td>
                       {% for event in day.events %}
                         <td>{{ event.course_name }}</td>
                         <td>{{ event.time }}</td>
@@ -248,7 +248,7 @@
           <tr>
             <td>{{ forloop.counter }}</td>
             <td>${{ invoice.amount }}</td>
-            <td>{ invoice.due_date|date:"M d, Y" }</td>
+            <td>{{ invoice.due_date|date:"M d, Y" }}</td>
             <td>
               <span class="badge bg-warning">Pending</span>
             </td>
@@ -279,7 +279,7 @@
                   <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>${{ invoice.amount }}</td>
-                    <td>{ invoice.due_date|date:"M d, Y" }</td>
+                    <td>{{ invoice.due_date|date:"M d, Y" }}</td>
                     <td>
                       <span class="badge bg-warning">Pending</span>
                     </td>
